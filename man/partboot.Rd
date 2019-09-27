@@ -4,17 +4,12 @@
 \alias{partboot}
 \title{Partial Bootstrapped Semantic Network Analysis}
 \usage{
-partboot(data, paired = NULL, percent, sim, weighted = FALSE,
-  iter = 1000, cores)
+partboot(..., percent, sim, weighted = FALSE, iter = 1000, cores)
 }
 \arguments{
-\item{data}{Matrix or data frame.
-Cleaned response matrix}
-
-\item{paired}{Matrix or data frame.
-Input for a second network to be paired with \code{data}.
-Defaults to \code{NULL}.
-Input a matrix or data frame containing another sample}
+\item{...}{Matrices or data frames.
+Binary response matrices (e.g., \code{binary} output from
+\code{\link[SemNetCleaner]{textcleaner}})}
 
 \item{percent}{Numeric.
 Percent of nodes to remain in the network.
@@ -37,14 +32,14 @@ Defaults to \code{1000}}
 \item{cores}{Numeric.
 Number of computer processing cores to use for bootstrapping samples.
 Defaults to \emph{n} - 1 total number of cores.
-Set to any number between 1 and maxmimum amount of cores on your computer
+Set to any number between 1 and maximum amount of cores on your computer
 (see \code{parellel::detectCores()})}
 }
 \value{
 Returns a list containing:
 
 \item{dataMeas}{A matrix for the network input in the \code{data}
-arugment, where columns are the semantic network measures
+argument, where columns are the semantic network measures
 from \code{\link[SemNeT]{semnetmeas}} and rows are their values from each
 bootstrapped sample (results in a matrix with the dimensions \code{iter} by 3)}
 

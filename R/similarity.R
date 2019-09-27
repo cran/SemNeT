@@ -10,11 +10,12 @@
 #' 
 #' Below are the definitions for each bin:
 #' 
-#' 
-#' \tabular{llll}{
-#' \tab a \tab b \tab a+b (R1)\cr
-#' \tab c \tab d  \tab c+d (R2)\cr
-#' \tab a+c (C1) \tab b+d (C2) \tab a+b+c+d (N)\cr
+#' \tabular{ccccc}{
+#' \tab 1 \tab 0 \tab \tab \cr
+#' 1 \tab a \tab b \tab a+b \tab (R1)\cr
+#' 0 \tab c \tab d  \tab c+d \tab (R2)\cr
+#' \tab a+c \tab b+d \tab a+b+c+d \tab (N) \cr
+#' \tab (C1) \tab (C2) \tab (N) \tab \cr
 #' }
 #'     
 #' Options include:
@@ -33,7 +34,7 @@
 #' \item{\code{"jaccard"} =}
 #' {\eqn{a / a + b + c}}
 #' 
-#' \item{\code{"phi"} =}
+#' \item{\code{"phi"} and \code{"cor"} =}
 #' {\eqn{ad - bc / \sqrt(R1 x R2 x C1 x C2)}}
 #' 
 #' \item{\code{"rr"} =}
@@ -59,7 +60,7 @@
 #' 
 #' @export
 #Similiarity measures----
-similarity <- function (data, method = c("angular", "cosine",
+similarity <- function (data, method = c("angular", "cor", "cosine",
                                          "euclid", "faith", "jaccard",
                                          "phi", "rr"))
 {
@@ -116,7 +117,7 @@ similarity <- function (data, method = c("angular", "cosine",
     {mat <- dist(t(data), diag = TRUE, upper = TRUE)
     }else if(method == "cosine")
     {mat <- lsa::cosine(as.matrix(data))
-    }else if(method == "phi")
+    }else if(method == "phi" || method == "cor")
     {mat <- cor(data)}
     
     return(mat)
