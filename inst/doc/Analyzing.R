@@ -1,4 +1,4 @@
-## ----setup, include=FALSE------------------------------------------------
+## ----setup, include=FALSE-----------------------------------------------------
 knitr::opts_chunk$set(echo = TRUE)
 library(SemNeT)
 
@@ -13,7 +13,7 @@ compare.nets(net.low, net.high,
 #  semnetmeas(net.low, meas = c("ASPL", "CC", "Q"), weighted = FALSE)
 #  semnetmeas(net.high, meas = c("ASPL", "CC", "Q"), weighted = FALSE)
 
-## ----tab7, echo = FALSE, eval = TRUE, comment = NA, warning = FALSE------
+## ----tab7, echo = FALSE, eval = TRUE, comment = NA, warning = FALSE-----------
 output <- matrix(c("Low", "3.25", "0.74", "0.64",
                    "High", "2.78", "0.76", "0.59"),
                  ncol = 4, byrow = TRUE)
@@ -27,7 +27,7 @@ htmlTable::htmlTable(output,
 #  # Compute tests against random networks
 #  rand.test <- randnet.test(net.low, net.high, iter = 1000, cores = 4)
 
-## ----tab8, echo = FALSE, eval = TRUE, comment = NA, warning = FALSE------
+## ----tab8, echo = FALSE, eval = TRUE, comment = NA, warning = FALSE-----------
 output <- matrix(c("", "ASPL", "< .001", "3.04", "0.03",
                    "Low", "CC", "< .001", "0.04", "0.01",
                    "", "Q", "< .001", "0.38", "0.01",
@@ -83,7 +83,7 @@ gridExtra::grid.arrange(vignette.plots$aspl, vignette.plots$cc, vignette.plots$q
 #  tests <- partboot.test(boot.fifty, boot.sixty, boot.seventy,
 #                         boot.eighty, boot.ninety)
 
-## ----tab9, echo = FALSE, eval = TRUE, comment = NA, warning = FALSE------
+## ----tab9, echo = FALSE, eval = TRUE, comment = NA, warning = FALSE-----------
 output <- matrix(c("1998", "-82.59", "3.69", "50.73", "2.27", "-66.76", "2.99",
                    "1998", "-54.64", "2.44", "39.75", "1.78", "-46.93", "2.10",
                    "1998", "-34.86", "1.56", "32.24", "1.44", "-33.61", "1.50",
