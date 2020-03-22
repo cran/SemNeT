@@ -4,7 +4,9 @@
 \name{two.result}
 \alias{two.result}
 \title{Simulated Result for Dataset One and Two}
-\format{two.result (list, length = 6)}
+\format{
+two.result (list, length = 6)
+}
 \usage{
 data(two.result)
 }
