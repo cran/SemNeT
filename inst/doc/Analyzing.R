@@ -4,7 +4,7 @@ library(SemNeT)
 
 ## ----Fig6, fig.cap = "Comparison of low (left) and high (right) openness to experience semantic networks based on the Fruchterman-Reingold algorithm", fig.align = 'center', fig.height = 5, fig.width = 8, warning = FALSE, eval = TRUE, echo = TRUE, message = FALSE----
 # Visually compare networks
-compare.nets(net.low, net.high,
+compare_nets(net.low, net.high,
              title = list("Low Openness", "High Openness"),
              config = "spring", weighted = FALSE)
 
@@ -43,30 +43,39 @@ htmlTable::htmlTable(output,
 
 ## ----Arguments for partboot, echo = TRUE, eval = FALSE, comment = NA, warning = FALSE----
 #  #Arguments for 'partboot' function
-#  partboot(..., percent, sim, weighted = FALSE,
-#           iter = 1000, cores)
+#  bootSemNeT(..., method = c("CN", "NRW", "PF", "TMFG"),
+#           type = c("case", "node"), prop, sim,
+#           weighted = FALSE, iter = 1000, cores)
 
 ## ----Partial bootstrap analysis, echo = TRUE, eval = FALSE, comment = NA, warning = FALSE----
 #  # Compute partial bootstrap network analysis
+#  ## Set seed for reproducibility
+#  set.seed(42)
+#  
 #  ## 50% of nodes remaining in network
 #  boot.fifty <- partboot(equate.low, equate.high,
-#                         percent = .50, iter = 1000,
+#                         method = "TMFG", type = "node",
+#                         prop = .50, iter = 1000,
 #                         sim = "cosine", cores = 4)
 #  ## 60% of nodes remaining in network
 #  boot.sixty <- partboot(equate.low, equate.high,
-#                         percent = .60, iter = 1000,
+#                         method = "TMFG", type = "node",
+#                         prop = .60, iter = 1000,
 #                         sim = "cosine", cores = 4)
 #  ## 70% of nodes remaining in network
 #  boot.seventy <- partboot(equate.low, equate.high,
-#                           percent = .70, iter = 1000,
+#                           method = "TMFG", type = "node",
+#                           prop = .70,, iter = 1000,
 #                           sim = "cosine", cores = 4)
 #  ## 80% of nodes remaining in network
 #  boot.eighty <- partboot(equate.low, equate.high,
-#                          percent = .80, iter = 1000,
+#                          method = "TMFG", type = "node",
+#                          prop = .80, iter = 1000,
 #                          sim = "cosine", cores = 4)
 #  ## 90% of nodes remaining in network
 #  boot.ninety <- partboot(equate.low, equate.high,
-#                          percent = .90, iter = 1000,
+#                          method = "TMFG", type = "node",
+#                          prop = .90, iter = 1000,
 #                          sim = "cosine", cores = 4)
 
 ## ----Partial bootstrap analysis plots, echo = TRUE, eval = FALSE, comment = NA, warning = FALSE----

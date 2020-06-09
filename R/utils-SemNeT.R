@@ -1,18 +1,195 @@
-#' Organization function for partboot.plot
+#' Changes Bad Responses to NA
 #' 
-#' @description A wrapper function used in \link[SemNeT]{partboot}. Not to be used individually
+#' @description A sub-routine to determine whether responses are good or bad.
+#' Bad responses are replaced with missing (\code{NA}). Good responses are returned.
+#' 
+#' @param word Character.
+#' A word to be tested for whether it is bad
+#' 
+#' @param ... Vector.
+#' Additional responses to be considered bad
+#' 
+#' @return If response is bad, then returns \code{NA}.
+#' If response is valid, then returns the response
+#' 
+#' @author Alexander Christensen <alexpaulchristensen@gmail.com>
+#' 
+#' @noRd
+# Change Bad Responses----
+# Updated 15.04.2020
+bad.response <- function (word, ...)
+{
+  # Other bad responses
+  others <- unlist(list(...))
+  
+  # Bad responses
+  bad <- c(NA, "NA", "", " ", "  ", others)
+  
+  # If there is no longer a response
+  if(length(word)==0)
+  {word <- NA}
+  
+  for(i in 1:length(word))
+  {
+    #if bad, then convert to NA
+    if(word[i] %in% bad)
+    {word[i] <- NA}
+  }
+  
+  return(word)
+}
+
+#' Responses to binary matrix
+#' 
+#' @description Converts the response matrix to binary response matrix
+#' 
+#' @param resp Response matrix.
+#' A response matrix of verbal fluency or linguistic data
+#' 
+#' @return A list containing objects for each participant and their responses
+#' 
+#' @examples
+#' # Toy example
+#' raw <- open.animals[c(1:10),-c(1:3)]
+#' 
+#' # Clean and prepocess data
+#' clean <- textcleaner(raw, partBY = "row", dictionary = "animals")
+#' 
+#' # Change response matrix to binary response matrix
+#' binmat <- resp2bin(clean$responses$clean)
+#' 
+#' @author Alexander Christensen <alexpaulchristensen@gmail.com>
+#' 
+#' @noRd
+# Response matrix to binary matrix
+# Updated 15.04.2020
+resp2bin <- function (resp)
+{
+  # Data matrix
+  mat <- as.matrix(resp)
+  
+  # Replace bad responses with NA
+  mat <- bad.response(mat)
+  
+  # Unique responses
+  uniq.resp <- sort(na.omit(unique(as.vector(mat))))
+  
+  # Number of cases
+  n <- nrow(mat)
+  
+  # Initialize binary matrix
+  bin.mat <- matrix(0, nrow = n, ncol = length(uniq.resp))
+  colnames(bin.mat) <- uniq.resp
+  row.names(bin.mat) <- row.names(resp)
+  
+  # Loop through and replace
+  for(i in 1:n)
+  {bin.mat[i,na.omit(match(mat[i,], colnames(bin.mat)))] <- 1}
+  
+  return(bin.mat)
+}
+
+#' Binary Responses to Character Responses
+#' @description Converts the binary response matrix into characters for each participant
+#' 
+#' @param rmat Binary matrix.
+#' A binarized response matrix of verbal fluency or linguistic data
+#' 
+#' @param to.data.frame Boolean.
+#' Should output be a data frame where participants are columns?
+#' Defaults to \code{FALSE}.
+#' Set to \code{TRUE} to convert output to data frame
+#' 
+#' @return A list containing objects for each participant and their responses
+#' 
+#' @examples
+#' # Toy example
+#' raw <- open.animals[c(1:10),-c(1:3)]
+#' 
+#' # Clean and prepocess data
+#' clean <- textcleaner(raw, partBY = "row", dictionary = "animals")
+#' 
+#' # Change binary response matrix to word response matrix
+#' charmat <- bin2resp(clean$binary)
+#' 
+#' @author Alexander Christensen <alexpaulchristensen@gmail.com>
+#' 
+#' @noRd
+# Binary to Response----
+# Updated 15.04.2020
+bin2resp <- function (rmat, to.data.frame = FALSE)
+{
+  #grab response names
+  name <- colnames(rmat)
+  
+  #number of responses
+  n <- ncol(rmat)
+  
+  #initialize matrix
+  mat <- matrix(NA,nrow=nrow(rmat),ncol=ncol(rmat))
+  
+  #loop for each name
+  for(i in 1:n)
+  {mat[,i] <- ifelse(rmat[,i]==1,name[i],NA)}
+  
+  #number of participants
+  p <- nrow(rmat)
+  
+  #initialize participant list
+  part <- list()
+  
+  #loop for each participant
+  for(j in 1:p)
+  {
+    resps <- na.omit(mat[j,])
+    attributes(resps)$na.action <- NULL
+    part[[row.names(rmat)[j]]] <- resps
+  }
+  
+  #convert output to data frame
+  if(to.data.frame)
+  {
+    nlen <- vector("numeric",length=length(part))
+    
+    num <- length(nlen)
+    
+    for(i in 1:num)
+    {nlen[i] <- length(part[[i]])}
+    
+    mlen <- max(nlen)
+    
+    part.df <- matrix("",nrow=mlen,ncol=num)
+    
+    for(i in 1:num)
+    {
+      reps <- mlen - nlen[i]
+      
+      part.df[,i] <- c(unlist(part[[i]]),rep("",reps))
+    }
+    
+    part <- as.data.frame(part.df)
+    colnames(part) <- row.names(rmat)
+    part <- t(part)
+  }
+  
+  return(part)
+}
+
+#' Organization function for \link[SemNeT]{plot.bootSemNeT}
+#' 
+#' @description A sub-routine used in \code{\link[SemNeT]{plot.bootSemNeT}}. Not to be used individually
 #' 
 #' @param input List.
-#' Input data from \link[SemNeT]{partboot}
+#' Input data from \code{\link[SemNeT]{bootSemNeT}}
 #' 
 #' @param len Numeric.
-#' Number of bootstrapped samples (percentages)
+#' Number of bootstrapped samples
 #' 
 #' @param measures Character.
 #' Network measures to be entered
 #' 
 #' @param name Character.
-#' Name(s) of object(s) used from \link[SemNeT]{partboot}
+#' Name(s) of object(s) used from \code{\link[SemNeT]{bootSemNeT}}
 #' 
 #' @param groups Character.
 #' Names for the group(s)
@@ -24,14 +201,14 @@
 #' 
 #' @examples
 #' #### NOT INTENDED FOR INDIVIDUAL USE ####
-#' #### WRAPPER FUNCTION ####
+#' #### SUB-ROUTINE ####
 #' 
 #' # Simulate Dataset
 #' one <- sim.fluency(20)
 #' \donttest{
 #' # Run partial bootstrap networks
-#' one.result <- partboot(data = one, percent = .50, iter = 1000,
-#' sim = "cosine", cores = 2)
+#' one.result <- bootSemNeT(data = one, prop = .50, iter = 1000,
+#' sim = "cosine", cores = 2, method = "TMFG", type = "node")
 #' }
 #' # Plot
 #' org.plot(input = list(one.result), name = "data",
@@ -51,8 +228,8 @@
 #' @importFrom stats qnorm
 #' 
 #' @noRd
-#Partial Bootstrapped Semantic Network Analysis----
-#Updated 03.21.2020
+# Plot: Bootstrapped Network Statistics----
+#Updated 30.03.2020
 org.plot <- function (input, len, measures, name, groups, netmeas)
 {
   
@@ -63,7 +240,7 @@ org.plot <- function (input, len, measures, name, groups, netmeas)
   #CRAN CHECKS
   group <- NULL; y <- NULL; x <- NULL; width <- NULL
   violinwidth <- NULL; xmax <- NULL; xminv <- NULL
-  xmaxv <- NULL; percent <- NULL
+  xmaxv <- NULL; prop <- NULL
   
   #Missing arguments
   if(missing(measures))
@@ -152,19 +329,27 @@ org.plot <- function (input, len, measures, name, groups, netmeas)
   #### SET UP DATA FOR PLOTS ####
   ###############################
   
-  # Initialize Percent and Iterations
+  # Initialize Proportion and Iterations
   perc <- vector("numeric", length = len)
   it <- perc
   iter <- input[[1]]$iter
   
   for(i in 1:len)
   {
-    perc[i] <- input[[i]]$percent
+    if(input[[i]]$type == "node")
+    {
+      perc[i] <- input[[i]]$prop
+      type <- "node"
+    }else{type <- "case"}
+    
     it[i] <- input[[i]]$iter
   }
   
   plot.mat <- matrix(NA, nrow = sum(it)*length(name), ncol = 2 + length(measures))
-  colnames(plot.mat) <- c("group","percent",measures)
+  colnames(plot.mat) <- c("group","prop",measures)
+  
+  if(input[[i]]$type == "case")
+  {plot.mat <- plot.mat[,-2]}
   
   #Grab measures
   meas <- matrix(NA, nrow = 1, ncol = length(measures))
@@ -179,52 +364,87 @@ org.plot <- function (input, len, measures, name, groups, netmeas)
   
   plot.mat[,"group"] <- rep(1:length(name), each = len * iter)
   
-  plot.mat[,"percent"] <- rep(rep(perc, each = iter), length(name))
-  plot.mat[,3:(2+length(measures))] <- meas
+  if(input[[i]]$type == "node")
+  {
+    plot.mat[,"prop"] <- rep(rep(perc, each = iter), length(name))
+    plot.mat[,3:(2+length(measures))] <- meas
+  }else{plot.mat[,2:(1+length(measures))] <- meas}
   
   #Convert to data frame
   plot.mat <- as.data.frame(plot.mat, stringsAsFactors = TRUE)
   
   #Select network measure of interest
-  plot.mat.select <- plot.mat[,c("group","percent",netmeas)]
-  colnames(plot.mat.select)[3] <- "netmeas"
-  plot.mat.select$group <- as.factor(as.character(plot.mat.select$group))
+  if(input[[i]]$type == "node")
+  {
+    plot.mat.select <- plot.mat[,c("group","prop",netmeas)]
+    colnames(plot.mat.select)[3] <- "netmeas"
+  }else{
+    plot.mat.select <- plot.mat[,c("group",netmeas)]
+    colnames(plot.mat.select)[2] <- "netmeas"
+  }
   
-  #Descriptives
-  plot.mat.desc <- matrix(NA, nrow = (length(groups) * length(perc)), ncol = 6)
-  colnames(plot.mat.desc) <- c("group", "percent", "mean", "se", "lower.ci", "upper.ci")
+  plot.mat.select$group <- as.factor(as.character(plot.mat.select$group))
   
   #Initialize count
   count <- 0
   
-  for(i in 1:length(groups))
-    for(j in 1:length(perc))
+  #Descriptives
+  if(input[[i]]$type == "node")
+  {
+    plot.mat.desc <- matrix(NA, nrow = (length(groups) * length(perc)), ncol = 6)
+    colnames(plot.mat.desc) <- c("group", "prop", "mean", "se", "lower.ci", "upper.ci")
+    
+    for(i in 1:length(groups))
+      for(j in 1:length(perc))
+      {
+        #Update count
+        count <- count + 1
+        
+        #Target
+        target.group <- which(plot.mat.select$group == i)
+        target.perc <- target.group[which(plot.mat.select$prop[target.group] == perc[j])]
+        target.data <- plot.mat.select[target.perc, "netmeas"]
+        
+        plot.mat.desc[count, "group"] <- i
+        plot.mat.desc[count, "prop"] <- perc[j]
+        plot.mat.desc[count, "mean"] <- mean(target.data)
+        plot.mat.desc[count, "se"] <- sd(target.data)
+        plot.mat.desc[count, "lower.ci"] <- plot.mat.desc[count, "se"] * 1.96
+        plot.mat.desc[count, "upper.ci"] <- plot.mat.desc[count, "se"] * 1.96
+      }
+  }else{
+    plot.mat.desc <- matrix(NA, nrow = length(groups), ncol = 5)
+    colnames(plot.mat.desc) <- c("group", "mean", "se", "lower.ci", "upper.ci")
+    
+    for(i in 1:length(groups))
     {
       #Update count
       count <- count + 1
       
       #Target
       target.group <- which(plot.mat.select$group == i)
-      target.perc <- target.group[which(plot.mat.select$percent[target.group] == perc[j])]
-      target.data <- plot.mat.select[target.perc, "netmeas"]
+      target.data <- plot.mat.select[target.group, "netmeas"]
       
       plot.mat.desc[count, "group"] <- i
-      plot.mat.desc[count, "percent"] <- perc[j]
       plot.mat.desc[count, "mean"] <- mean(target.data)
       plot.mat.desc[count, "se"] <- sd(target.data)
       plot.mat.desc[count, "lower.ci"] <- plot.mat.desc[count, "se"] * 1.96
       plot.mat.desc[count, "upper.ci"] <- plot.mat.desc[count, "se"] * 1.96
     }
+  }
   
   #Convert to data frame
   plot.desc <- as.data.frame(plot.mat.desc, stringsAsFactors = TRUE)
   plot.desc$group <- as.factor(as.character(plot.desc$group))
   
   #Change to integer values
-  plot.mat.select$percent <- round(plot.mat.select$percent*100,0)
-  plot.desc$percent <- round(plot.desc$percent*100,0)
-  plot.mat.select$percent <- as.factor(as.character(plot.mat.select$percent))
-  plot.desc$percent <- as.factor(as.character(plot.desc$percent))
+  if(type == "node")
+  {
+    plot.mat.select$prop <- sprintf("%1.2f",plot.mat.select$prop)
+    plot.desc$prop <- sprintf("%1.2f", plot.desc$prop)
+    plot.mat.select$prop <- as.factor(as.character(plot.mat.select$prop))
+    plot.desc$prop <- as.factor(as.character(plot.desc$prop))
+  }
   
   ##############
   #### PLOT ####
@@ -240,56 +460,186 @@ org.plot <- function (input, len, measures, name, groups, netmeas)
   {full.meas <- "Modularity"}
   
   # Rainclouds for repeated measures, continued
-  pl <- ggplot(plot.mat.select, aes(x = percent, y = netmeas, fill = group)) +
+  if(type == "node")
+  {
+    pl <- ggplot(plot.mat.select, aes(x = prop, y = netmeas, fill = group)) +
+      
+      geom_flat_violin(aes(fill = group),position = position_nudge(x = 0.05, y = 0),
+                       adjust = 1.5, trim = FALSE, alpha = .5, colour = NA) +
+      
+      geom_point(aes(x = as.numeric(prop)-.125, y = netmeas, colour = group),
+                 position = position_jitter(width = .05), alpha = .3, size = 1, shape = 20) +
+      
+      geom_boxplot(aes(x = prop, y = netmeas, fill = group),outlier.shape = NA,
+                   alpha = .5, width = .1, colour = "black") +
+      
+      geom_point(data = plot.desc, aes(x = prop, y = mean),
+                 position = position_nudge(x = -.125),
+                 alpha = 1, pch = 21, size = 3) +
+      
+      #geom_errorbar(data = plot.desc, aes(x = prop, y = mean, ymin = mean - lower.ci, ymax = mean + upper.ci),
+      #              position = position_nudge(x = -.25, y = .05),
+      #              colour = "black", width = 0.1, size = 0.8, alpha = .5) +
+      
+      scale_colour_brewer(name = "Groups", labels = groups, palette = "Dark2") +
+      
+      scale_fill_brewer(name = "Groups", labels = groups, palette = "Dark2") +
+      
+      labs(title = paste("Bootstrap Node-drop Results:",netmeas,sep=" "),
+           subtitle = paste(iter,"Samples",sep = " "),
+           x = "Proportion of\nNodes Remaining",
+           y = paste(full.meas," (",netmeas,")",sep="")) +
+      
+      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+            panel.background = element_blank(), axis.line = element_line(colour = "black"),
+            plot.title = element_text(face = "bold", size = 20),
+            plot.subtitle = element_text(size = 16),
+            axis.title = element_text(face = "bold", size = 16),
+            axis.text = element_text(size = 14),
+            legend.title = element_text(face = "bold", size = 16),
+            legend.text = element_text(size = 14)) +
+      
+      scale_y_continuous(breaks = scales::breaks_extended(n = 5)) +
+      
+      coord_flip()
     
-    geom_flat_violin(aes(fill = group),position = position_nudge(x = 0.05, y = 0),
-                     adjust = 1.5, trim = FALSE, alpha = .5, colour = NA) +
-    
-    geom_point(aes(x = as.numeric(percent)-.125, y = netmeas, colour = group),
-               position = position_jitter(width = .05), alpha = .3, size = 1, shape = 20) +
-    
-    geom_boxplot(aes(x = percent, y = netmeas, fill = group),outlier.shape = NA,
-                 alpha = .5, width = .1, colour = "black") +
-    
-    geom_point(data = plot.desc, aes(x = percent, y = mean),
-               position = position_nudge(x = -.125),
-               colour = "black", alpha = 1) +
-    
-    #geom_errorbar(data = plot.desc, aes(x = percent, y = mean, ymin = mean - lower.ci, ymax = mean + upper.ci),
-    #              position = position_nudge(x = -.25, y = .05),
-    #              colour = "black", width = 0.1, size = 0.8, alpha = .5) +
-    
-    scale_colour_brewer(name = "Groups", labels = groups, palette = "Dark2") +
-    
-    scale_fill_brewer(name = "Groups", labels = groups, palette = "Dark2") +
-    
-    labs(title = paste("Bootstrapped Node-drop Results:",netmeas,sep=" "),
-         subtitle = paste(iter,"Samples",sep = " "),
-         x = "Percent of Nodes\nRemaining (%)",
-         y = paste(full.meas," (",netmeas,")",sep="")) +
-    
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          panel.background = element_blank(), axis.line = element_line(colour = "black"),
-          plot.title = element_text(face = "bold"),
-          axis.title.x = element_text(face = "bold"),
-          axis.title.y = element_text(face = "bold"),
-          legend.title = element_text(face = "bold")) +
-    
-    coord_flip()
+  }else{
+    pl <- ggplot(plot.mat.select, aes(x = group, y = netmeas, fill = group)) +
+      
+      geom_flat_violin(aes(fill = group),position = position_nudge(x = 0.05, y = 0),
+                       adjust = 1.5, trim = FALSE, alpha = .5, colour = NA) +
+      
+      geom_point(aes(x = group, y = netmeas, colour = group),
+                 position = position_jitter(width = .05), alpha = .3, size = 1, shape = 20) +
+      
+      geom_boxplot(aes(x = group, y = netmeas, fill = group),outlier.shape = NA,
+                   alpha = .5, width = .1, colour = "black") +
+      
+      geom_point(data = plot.desc, aes(x = group, y = mean),
+                 position = position_nudge(x = -.125),
+                 alpha = 1, pch = 21, size = 3) +
+      
+      #geom_errorbar(data = plot.desc, aes(x = prop, y = mean, ymin = mean - lower.ci, ymax = mean + upper.ci),
+      #              position = position_nudge(x = -.25, y = .05),
+      #              colour = "black", width = 0.1, size = 0.8, alpha = .5) +
+      
+      scale_colour_brewer(name = "Groups", labels = groups, palette = "Dark2") +
+      
+      scale_fill_brewer(name = "Groups", labels = groups, palette = "Dark2") +
+      
+      scale_x_discrete(label = name) +
+      
+      labs(title = paste("Bootstrap Case-wise Results:",netmeas,sep=" "),
+           subtitle = paste(iter,"Samples",sep = " "),
+           x = "Groups",
+           y = paste(full.meas," (",netmeas,")",sep="")) +
+      
+      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+            panel.background = element_blank(), axis.line = element_line(colour = "black"),
+            plot.title = element_text(face = "bold", size = 20),
+            plot.subtitle = element_text(size = 16),
+            axis.title = element_text(face = "bold", size = 16),
+            axis.text = element_text(size = 14),
+            legend.title = element_text(face = "bold", size = 16),
+            legend.text = element_text(size = 14)) +
+      
+      scale_y_continuous(breaks = scales::breaks_extended(n = 5)) +
+      
+      coord_flip()
+  }
   
   return(pl)
 }
 #----
 
-#' Wrapper function for \code{\link[SemNeT]{partboot.test}}
+#' Generates a Random Network
+#' 
+#' @description Generates a random binary network
+#' 
+#' @param nodes Numeric.
+#' Number of nodes in random network
+#' 
+#' @param edges Numeric.
+#' Number of edges in random network
+#' 
+#' @param A Matrix or data frame.
+#' An adjacency matrix (i.e., network) to be used to estimated a random network with
+#' fixed edges (allows for asymmetric network estimation)
+#' 
+#' @return Returns an adjacency matrix of a random network
+#' 
+#' @examples
+#' rand <- randnet(10, 27)
+#' 
+#' @references 
+#' Rubinov, M., & Sporns, O. (2010). 
+#' Complex network measures of brain connectivity: Uses and interpretations. 
+#' \emph{NeuroImage}, \emph{52}, 1059-1069.
+#' 
+#' Csardi, G., & Nepusz, T. (2006).
+#' The \emph{igraph} software package for complex network research.
+#' \emph{InterJournal, Complex Systems}, 1695.
+#' 
+#' @author Alexander Christensen <alexpaulchristensen@gmail.com>
+#' 
+#' @noRd
+# Random Network----
+# Updated 20.04.2020
+randnet <- function (nodes = NULL, edges = NULL, A = NULL)
+{
+  if(is.null(A))
+  {
+    # Initialize matrix
+    mat <- matrix(1, nrow = nodes, ncol = nodes)
+    
+    # Set diagonal to zero
+    diag(mat) <- 0
+    
+    # Indices of upper diagonal
+    ind <- ifelse(upper.tri(mat) == TRUE, 1, 0)
+    i <- which(ind == 1)
+    
+    # Sample zeros and ones
+    rp <- sample(length(i))
+    # Get indices
+    irp <- i[rp]
+    
+    # Initialize random matrix
+    rand <- matrix(0, nrow = nodes, ncol = nodes)
+    
+    # Insert edges
+    rand[irp[1:edges]] <- 1
+    
+    # Make symmetric
+    rand <- rand + t(rand)
+    
+  }else{
+    
+    # Make diagonal of network zero
+    diag(A) <- 0
+    
+    # Compute degree
+    degrees <- NetworkToolbox::degree(A)
+    
+    # Get degrees based on directed or undirected
+    # Use igraph
+    if(is.list(degrees))
+    {rand <- as.matrix(igraph::as_adj(igraph::sample_degseq(out.deg = degrees$outDegree, in.deg = degrees$inDegree, method = "vl")))
+    }else{rand <- as.matrix(igraph::as_adj(igraph::sample_degseq(out.deg = degrees, method = "vl")))}
+  }
+  
+  return(rand)
+}
+
+#' Sub-routine function for \code{\link[SemNeT]{test.bootSemNeT}}
 #' 
 #' @description Computes statistical tests for partial bootstrapped
-#' networks from \code{\link[SemNeT]{partboot}}. Automatically
+#' networks from \code{\link[SemNeT]{bootSemNeT}}. Automatically
 #' computes \emph{t}-tests (\code{\link{t.test}}) or ANOVA
 #' (\code{\link{aov}}) including Tukey's HSD for pairwise comparisons
 #' (\code{\link{TukeyHSD}})
 #' 
-#' @param partboot.obj Object from \code{\link[SemNeT]{partboot}}
+#' @param bootSemNeT.obj Object from \code{\link[SemNeT]{bootSemNeT}}
 #' 
 #' @param formula Character.
 #' A formula for specifying an ANOVA structure. The formula should
@@ -305,11 +655,11 @@ org.plot <- function (input, len, measures, name, groups, netmeas)
 #' 
 #' @return Returns a list containing the objects:
 #' 
-#' \item{ASPL}{Test statistics for each percentage of nodes remaining for ASPL}
+#' \item{ASPL}{Test statistics for each proportion of nodes remaining for ASPL}
 #' 
-#' \item{CC}{Test statistics for each percentage of nodes remaining for CC}
+#' \item{CC}{Test statistics for each proportion of nodes remaining for CC}
 #' 
-#' \item{Q}{Test statistics for each percentage of nodes remaining for Q}
+#' \item{Q}{Test statistics for each proportion of nodes remaining for Q}
 #' 
 #' If two groups:
 #' 
@@ -332,7 +682,7 @@ org.plot <- function (input, len, measures, name, groups, netmeas)
 #' groups are input, then \code{"d"} and \code{"p"} are used to represent
 #' \code{data} and \code{paired} samples from \code{\link[SemNeT]{partboot}}, respectively}
 #' 
-#' Row names refer to the percentage of nodes remaining in bootstrapped networks
+#' Row names refer to the proportion of nodes remaining in bootstrapped networks
 #' 
 #' If three or more groups:
 #' 
@@ -351,11 +701,11 @@ org.plot <- function (input, len, measures, name, groups, netmeas)
 #' two <- sim.fluency(20)
 #' \donttest{
 #' # Run partial bootstrap networks
-#' two.result <- partboot(one, two, percent = .50, iter = 1000,
-#' sim = "cosine", cores = 2)
+#' two.result <- bootSemNeT(one, two, prop = .50, iter = 1000,
+#' sim = "cosine", cores = 2, method = "TMFG", type = "node")
 #' }
 #' # Compute tests
-#' partboot.one.test(two.result)
+#' boot.one.test(two.result)
 #' 
 #' \donttest{
 #' # Two-way ANOVA example
@@ -384,10 +734,10 @@ org.plot <- function (input, len, measures, name, groups, netmeas)
 #' groups <- as.data.frame(groups)
 #' 
 #' ## Run partial bootstrap networks
-#' boot.fifty <- partboot(hihi, hilo, lohi, lolo, percent = .50)
+#' boot.fifty <- bootSemNeT(hihi, hilo, lohi, lolo, prop = .50, method = "TMFG", type = "node")
 #' 
 #' ## Compute tests
-#' partboot.one.test(boot.fifty, formula = "y ~ gf*caq", groups = groups)
+#' boot.one.test(boot.fifty, formula = "y ~ gf*caq", groups = groups)
 #' }
 #' 
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
@@ -395,13 +745,13 @@ org.plot <- function (input, len, measures, name, groups, netmeas)
 #' @importFrom stats t.test aov TukeyHSD as.formula
 #' 
 #' @noRd
-#Test: Partial Bootstrapped Network Statistics----
-# Updated 21.03.2020
-partboot.one.test <- function (partboot.obj, formula = NULL, groups = NULL)
+# Test: Bootstrapped Network Statistics----
+# Updated 21.05.2020
+boot.one.test <- function (bootSemNeT.obj, formula = NULL, groups = NULL)
 {
   #Check for 'partboot' object
-  if(class(partboot.obj) != "partboot")
-  {stop("Object input into 'partboot.obj' is not a 'partboot' object")}
+  if(class(bootSemNeT.obj) != "bootSemNeT")
+  {stop("Object input into 'bootSemNeT.obj' is not a 'bootSemNeT' object")}
   
   #Check for data if formula is not NULL
   if(!is.null(formula))
@@ -411,10 +761,10 @@ partboot.one.test <- function (partboot.obj, formula = NULL, groups = NULL)
   }
   
   #Get names of networks
-  name <- unique(gsub("Summ","",gsub("Meas","",names(partboot.obj))))
+  name <- unique(gsub("Summ","",gsub("Meas","",names(bootSemNeT.obj))))
   
-  #Remove percent and iter
-  name <- na.omit(gsub("iter",NA,gsub("percent",NA,name)))
+  #Remove proportion and iter
+  name <- na.omit(gsub("type",NA,gsub("iter",NA,gsub("prop",NA,name))))
   attr(name, "na.action") <- NULL
   
   #Number of input
@@ -424,11 +774,14 @@ partboot.one.test <- function (partboot.obj, formula = NULL, groups = NULL)
   if(len < 2)
   {stop("Single samples cannot be tested. Use 'randnet.test' for single samples")}
   
-  #Identify percent of nodes remaining
-  perc <- partboot.obj$percent
+  #Identify prop of nodes remaining
+  perc <- bootSemNeT.obj$prop
+  
+  if(is.null(perc))
+  {perc <- 1.00}
   
   #Identify iterations
-  iter <- partboot.obj$iter
+  iter <- bootSemNeT.obj$iter
   
   ############################
   #### SIGNIFICANCE TESTS ####
@@ -453,29 +806,29 @@ partboot.one.test <- function (partboot.obj, formula = NULL, groups = NULL)
     
     ##ASPL Tests
     aspl <- matrix(NA, nrow = 1, ncol = 8)
-    row.names(aspl) <- paste(perc*100,"%",sep="")
+    row.names(aspl) <- sprintf("%1.2f", perc)
     colnames(aspl) <- c("t-statistic", "df", "p-value", "d", "Difference",
                         "CI95.lower", "CI95.upper","Direction")
     #ASPL
-    one.aspl <- partboot.obj[[paste(name[1],"Meas",sep="")]]["ASPL",]
-    two.aspl <- partboot.obj[[paste(name[2],"Meas",sep="")]]["ASPL",]
+    one.aspl <- bootSemNeT.obj[[paste(name[1],"Meas",sep="")]]["ASPL",]
+    two.aspl <- bootSemNeT.obj[[paste(name[2],"Meas",sep="")]]["ASPL",]
     
     #t-test
     test <- t.test(one.aspl, two.aspl, var.equal = TRUE)
     
     #Input results into table
-    aspl[paste(perc*100,"%",sep=""),1] <- round(as.numeric(test$statistic),3)
-    aspl[paste(perc*100,"%",sep=""),2] <- round(as.numeric(test$parameter),3)
-    aspl[paste(perc*100,"%",sep=""),3] <- round(as.numeric(test$p.value),3)
-    aspl[paste(perc*100,"%",sep=""),4] <- round(as.numeric(d(one.aspl,two.aspl)),3)
-    aspl[paste(perc*100,"%",sep=""),5] <- round(as.numeric(mean(one.aspl)-mean(two.aspl)),3)
-    aspl[paste(perc*100,"%",sep=""),6] <- round(as.numeric(test$conf.int[1]),3)
-    aspl[paste(perc*100,"%",sep=""),7] <- round(as.numeric(test$conf.int[2]),3)
+    aspl[sprintf("%1.2f", perc),1] <- round(as.numeric(test$statistic),3)
+    aspl[sprintf("%1.2f", perc),2] <- round(as.numeric(test$parameter),3)
+    aspl[sprintf("%1.2f", perc),3] <- round(as.numeric(test$p.value),3)
+    aspl[sprintf("%1.2f", perc),4] <- round(as.numeric(d(one.aspl,two.aspl)),3)
+    aspl[sprintf("%1.2f", perc),5] <- round(as.numeric(mean(one.aspl)-mean(two.aspl)),3)
+    aspl[sprintf("%1.2f", perc),6] <- round(as.numeric(test$conf.int[1]),3)
+    aspl[sprintf("%1.2f", perc),7] <- round(as.numeric(test$conf.int[2]),3)
     
     if(round(as.numeric(test$p.value),3) > .05)
-    {aspl[paste(perc*100,"%",sep=""),8] <- "n.s."
+    {aspl[sprintf("%1.2f", perc),8] <- "n.s."
     }else{
-      aspl[paste(perc*100,"%",sep=""),8] <- ifelse(sign(test$statistic)==1,
+      aspl[sprintf("%1.2f", perc),8] <- ifelse(sign(test$statistic)==1,
                                                    paste(name[1],">",name[2],sep=" "),
                                                    paste(name[2],">",name[1],sep=" ")
       )
@@ -483,29 +836,29 @@ partboot.one.test <- function (partboot.obj, formula = NULL, groups = NULL)
     
     ##CC Tests
     cc <- matrix(NA, nrow = 1, ncol = 8)
-    row.names(cc) <- paste(perc*100,"%",sep="")
+    row.names(cc) <- sprintf("%1.2f", perc)
     colnames(cc) <- c("t-statistic", "df", "p-value", "d", "Difference",
                       "CI95.lower", "CI95.upper","Direction")
     #CC
-    one.cc <- partboot.obj[[paste(name[1],"Meas",sep="")]]["CC",]
-    two.cc <- partboot.obj[[paste(name[2],"Meas",sep="")]]["CC",]
+    one.cc <- bootSemNeT.obj[[paste(name[1],"Meas",sep="")]]["CC",]
+    two.cc <- bootSemNeT.obj[[paste(name[2],"Meas",sep="")]]["CC",]
     
     #t-test
     test <- t.test(one.cc, two.cc, var.equal = TRUE)
     
     #Input results into table
-    cc[paste(perc*100,"%",sep=""),1] <- round(as.numeric(test$statistic),3)
-    cc[paste(perc*100,"%",sep=""),2] <- round(as.numeric(test$parameter),3)
-    cc[paste(perc*100,"%",sep=""),3] <- round(as.numeric(test$p.value),3)
-    cc[paste(perc*100,"%",sep=""),4] <- round(as.numeric(d(one.cc,two.cc)),3)
-    cc[paste(perc*100,"%",sep=""),5] <- round(as.numeric(mean(one.cc)-mean(two.cc)),3)
-    cc[paste(perc*100,"%",sep=""),6] <- round(as.numeric(test$conf.int[1]),3)
-    cc[paste(perc*100,"%",sep=""),7] <- round(as.numeric(test$conf.int[2]),3)
+    cc[sprintf("%1.2f", perc),1] <- round(as.numeric(test$statistic),3)
+    cc[sprintf("%1.2f", perc),2] <- round(as.numeric(test$parameter),3)
+    cc[sprintf("%1.2f", perc),3] <- round(as.numeric(test$p.value),3)
+    cc[sprintf("%1.2f", perc),4] <- round(as.numeric(d(one.cc,two.cc)),3)
+    cc[sprintf("%1.2f", perc),5] <- round(as.numeric(mean(one.cc)-mean(two.cc)),3)
+    cc[sprintf("%1.2f", perc),6] <- round(as.numeric(test$conf.int[1]),3)
+    cc[sprintf("%1.2f", perc),7] <- round(as.numeric(test$conf.int[2]),3)
     
     if(round(as.numeric(test$p.value),3) > .05)
-    {cc[paste(perc*100,"%",sep=""),8] <- "n.s."
+    {cc[sprintf("%1.2f", perc),8] <- "n.s."
     }else{
-      cc[paste(perc*100,"%",sep=""),8] <- ifelse(sign(test$statistic)==1,
+      cc[sprintf("%1.2f", perc),8] <- ifelse(sign(test$statistic)==1,
                                                  paste(name[1],">",name[2],sep=" "),
                                                  paste(name[2],">",name[1],sep=" ")
       )
@@ -513,29 +866,29 @@ partboot.one.test <- function (partboot.obj, formula = NULL, groups = NULL)
     
     ##Q Tests
     q <- matrix(NA, nrow = 1, ncol = 8)
-    row.names(q) <- paste(perc*100,"%",sep="")
+    row.names(q) <- sprintf("%1.2f", perc)
     colnames(q) <- c("t-statistic", "df", "p-value", "d", "Difference",
                      "CI95.lower", "CI95.upper","Direction")
     #Q
-    one.q <- partboot.obj[[paste(name[1],"Meas",sep="")]]["Q",]
-    two.q <- partboot.obj[[paste(name[2],"Meas",sep="")]]["Q",]
+    one.q <- bootSemNeT.obj[[paste(name[1],"Meas",sep="")]]["Q",]
+    two.q <- bootSemNeT.obj[[paste(name[2],"Meas",sep="")]]["Q",]
     
     #t-test
     test <- t.test(one.q, two.q, var.equal = TRUE)
     
     #Input results into table
-    q[paste(perc*100,"%",sep=""),1] <- round(as.numeric(test$statistic),3)
-    q[paste(perc*100,"%",sep=""),2] <- round(as.numeric(test$parameter),3)
-    q[paste(perc*100,"%",sep=""),3] <- round(as.numeric(test$p.value),3)
-    q[paste(perc*100,"%",sep=""),4] <- round(as.numeric(d(one.q,two.q)),3)
-    q[paste(perc*100,"%",sep=""),5] <- round(as.numeric(mean(one.q)-mean(two.q)),3)
-    q[paste(perc*100,"%",sep=""),6] <- round(as.numeric(test$conf.int[1]),3)
-    q[paste(perc*100,"%",sep=""),7] <- round(as.numeric(test$conf.int[2]),3)
+    q[sprintf("%1.2f", perc),1] <- round(as.numeric(test$statistic),3)
+    q[sprintf("%1.2f", perc),2] <- round(as.numeric(test$parameter),3)
+    q[sprintf("%1.2f", perc),3] <- round(as.numeric(test$p.value),3)
+    q[sprintf("%1.2f", perc),4] <- round(as.numeric(d(one.q,two.q)),3)
+    q[sprintf("%1.2f", perc),5] <- round(as.numeric(mean(one.q)-mean(two.q)),3)
+    q[sprintf("%1.2f", perc),6] <- round(as.numeric(test$conf.int[1]),3)
+    q[sprintf("%1.2f", perc),7] <- round(as.numeric(test$conf.int[2]),3)
     
     if(round(as.numeric(test$p.value),3) > .05)
-    {q[paste(perc*100,"%",sep=""),8] <- "n.s."
+    {q[sprintf("%1.2f", perc),8] <- "n.s."
     }else{
-      q[paste(perc*100,"%",sep=""),8] <- ifelse(sign(test$statistic)==1,
+      q[sprintf("%1.2f", perc),8] <- ifelse(sign(test$statistic)==1,
                                                 paste(name[1],">",name[2],sep=" "),
                                                 paste(name[2],">",name[1],sep=" ")
       )
@@ -561,7 +914,7 @@ partboot.one.test <- function (partboot.obj, formula = NULL, groups = NULL)
     if(is.null(formula))
     {
       aspl <- matrix(NA, nrow = 1, ncol = 5)
-      row.names(aspl) <- paste(perc*100,"%",sep="")
+      row.names(aspl) <- sprintf("%1.2f", perc)
       colnames(aspl) <- c("F-statistic", "group.df", "residual.df", "p-value", "p.eta.sq")
     }else{
       aspl <- list()
@@ -575,7 +928,7 @@ partboot.one.test <- function (partboot.obj, formula = NULL, groups = NULL)
     for(i in 1:len)
     {
       #Insert ASPL values
-      new.aspl <- partboot.obj[[paste(name[i],"Meas",sep="")]]["ASPL",]
+      new.aspl <- bootSemNeT.obj[[paste(name[i],"Meas",sep="")]]["ASPL",]
       
       #Initialize matrix
       mat <- cbind(rep(name[i], length(new.aspl)),new.aspl)
@@ -594,7 +947,7 @@ partboot.one.test <- function (partboot.obj, formula = NULL, groups = NULL)
     # Check for groups
     if(!is.null(groups))
     {
-      aov.obj <- as.data.frame(cbind(aov.obj,groups), stringsAsFactors = FALSE)
+      aov.obj <- as.data.frame(cbind(aov.obj, rep.rows(groups, iter)), stringsAsFactors = FALSE)
       colnames(aov.obj) <- c("Group", "Measure", colnames(groups))
       aov.obj$Group <- as.factor(as.character(aov.obj$Group))
       aov.obj$Measure <- as.numeric(as.character(aov.obj$Measure))
@@ -607,19 +960,19 @@ partboot.one.test <- function (partboot.obj, formula = NULL, groups = NULL)
     if(!is.null(formula))
     {
       test <- aov(as.formula(gsub("y", "Measure", formula)), data = aov.obj)
-      aspl[[paste(perc*100,"%",sep="")]] <- summary(test)[[1]]
-      hsd[[paste(perc*100,"%",sep="")]] <- TukeyHSD(test)
+      aspl[[sprintf("%1.2f", perc)]] <- summary(test)[[1]]
+      hsd[[sprintf("%1.2f", perc)]] <- TukeyHSD(test)
     }else{
       test <- aov(Measure ~ Group, data = aov.obj)
       
       test.summ <- summary(test)[[1]]
       
       #Input results into table
-      aspl[paste(perc*100,"%",sep=""),"F-statistic"] <- round(test.summ$`F value`[1],3)
-      aspl[paste(perc*100,"%",sep=""),"group.df"] <- test.summ$Df[1]
-      aspl[paste(perc*100,"%",sep=""),"residual.df"] <- test.summ$Df[2]
-      aspl[paste(perc*100,"%",sep=""),"p-value"] <- test.summ$`Pr(>F)`[1]
-      aspl[paste(perc*100,"%",sep=""),"p.eta.sq"] <- partial.eta(test.summ$`Sum Sq`[1],sum(test.summ$`Sum Sq`))
+      aspl[sprintf("%1.2f", perc),"F-statistic"] <- round(test.summ$`F value`[1],3)
+      aspl[sprintf("%1.2f", perc),"group.df"] <- test.summ$Df[1]
+      aspl[sprintf("%1.2f", perc),"residual.df"] <- test.summ$Df[2]
+      aspl[sprintf("%1.2f", perc),"p-value"] <- test.summ$`Pr(>F)`[1]
+      aspl[sprintf("%1.2f", perc),"p.eta.sq"] <- partial.eta(test.summ$`Sum Sq`[1],sum(test.summ$`Sum Sq`))
       
       #Tukey's HSD
       if(test.summ$`Pr(>F)`[1] < .05)
@@ -636,7 +989,7 @@ partboot.one.test <- function (partboot.obj, formula = NULL, groups = NULL)
     if(is.null(formula))
     {
       cc <- matrix(NA, nrow = 1, ncol = 5)
-      row.names(cc) <- paste(perc*100,"%",sep="")
+      row.names(cc) <- sprintf("%1.2f", perc)
       colnames(cc) <- c("F-statistic", "group.df", "residual.df", "p-value", "p.eta.sq")
     }else{
       cc <- list()
@@ -650,7 +1003,7 @@ partboot.one.test <- function (partboot.obj, formula = NULL, groups = NULL)
     for(i in 1:len)
     {
       #Insert CC values
-      new.cc <- partboot.obj[[paste(name[i],"Meas",sep="")]]["CC",]
+      new.cc <- bootSemNeT.obj[[paste(name[i],"Meas",sep="")]]["CC",]
       
       #Initialize matrix
       mat <- cbind(rep(name[i], length(new.cc)),new.cc)
@@ -669,7 +1022,7 @@ partboot.one.test <- function (partboot.obj, formula = NULL, groups = NULL)
     # Check for groups
     if(!is.null(groups))
     {
-      aov.obj <- as.data.frame(cbind(aov.obj,groups), stringsAsFactors = FALSE)
+      aov.obj <- as.data.frame(cbind(aov.obj, rep.rows(groups, iter)), stringsAsFactors = FALSE)
       colnames(aov.obj) <- c("Group", "Measure", colnames(groups))
       aov.obj$Group <- as.factor(as.character(aov.obj$Group))
       aov.obj$Measure <- as.numeric(as.character(aov.obj$Measure))
@@ -682,19 +1035,19 @@ partboot.one.test <- function (partboot.obj, formula = NULL, groups = NULL)
     if(!is.null(formula))
     {
       test <- aov(as.formula(gsub("y", "Measure", formula)), data = aov.obj)
-      cc[[paste(perc*100,"%",sep="")]] <- summary(test)[[1]]
-      hsd[[paste(perc*100,"%",sep="")]] <- TukeyHSD(test)
+      cc[[sprintf("%1.2f", perc)]] <- summary(test)[[1]]
+      hsd[[sprintf("%1.2f", perc)]] <- TukeyHSD(test)
     }else{
       test <- aov(Measure ~ Group, data = aov.obj)
       
       test.summ <- summary(test)[[1]]
       
       #Input results into table
-      cc[paste(perc*100,"%",sep=""),"F-statistic"] <- round(test.summ$`F value`[1],3)
-      cc[paste(perc*100,"%",sep=""),"group.df"] <- test.summ$Df[1]
-      cc[paste(perc*100,"%",sep=""),"residual.df"] <- test.summ$Df[2]
-      cc[paste(perc*100,"%",sep=""),"p-value"] <- test.summ$`Pr(>F)`[1]
-      cc[paste(perc*100,"%",sep=""),"p.eta.sq"] <- partial.eta(test.summ$`Sum Sq`[1],sum(test.summ$`Sum Sq`))
+      cc[sprintf("%1.2f", perc),"F-statistic"] <- round(test.summ$`F value`[1],3)
+      cc[sprintf("%1.2f", perc),"group.df"] <- test.summ$Df[1]
+      cc[sprintf("%1.2f", perc),"residual.df"] <- test.summ$Df[2]
+      cc[sprintf("%1.2f", perc),"p-value"] <- test.summ$`Pr(>F)`[1]
+      cc[sprintf("%1.2f", perc),"p.eta.sq"] <- partial.eta(test.summ$`Sum Sq`[1],sum(test.summ$`Sum Sq`))
       
       #Tukey's HSD
       if(test.summ$`Pr(>F)`[1] < .05)
@@ -711,7 +1064,7 @@ partboot.one.test <- function (partboot.obj, formula = NULL, groups = NULL)
     if(is.null(formula))
     {
       q <- matrix(NA, nrow = 1, ncol = 5)
-      row.names(q) <- paste(perc*100,"%",sep="")
+      row.names(q) <- sprintf("%1.2f", perc)
       colnames(q) <- c("F-statistic", "group.df", "residual.df", "p-value", "p.eta.sq")
     }else{
       q <- list()
@@ -725,7 +1078,7 @@ partboot.one.test <- function (partboot.obj, formula = NULL, groups = NULL)
     for(i in 1:len)
     {
       #Insert Q values
-      new.q <- partboot.obj[[paste(name[i],"Meas",sep="")]]["Q",]
+      new.q <- bootSemNeT.obj[[paste(name[i],"Meas",sep="")]]["Q",]
       
       #Initialize matrix
       mat <- cbind(rep(name[i], length(new.q)),new.q)
@@ -744,7 +1097,7 @@ partboot.one.test <- function (partboot.obj, formula = NULL, groups = NULL)
     # Check for groups
     if(!is.null(groups))
     {
-      aov.obj <- as.data.frame(cbind(aov.obj,groups), stringsAsFactors = FALSE)
+      aov.obj <- as.data.frame(cbind(aov.obj,rep.rows(groups, iter)), stringsAsFactors = FALSE)
       colnames(aov.obj) <- c("Group", "Measure", colnames(groups))
       aov.obj$Group <- as.factor(as.character(aov.obj$Group))
       aov.obj$Measure <- as.numeric(as.character(aov.obj$Measure))
@@ -757,19 +1110,19 @@ partboot.one.test <- function (partboot.obj, formula = NULL, groups = NULL)
     if(!is.null(formula))
     {
       test <- aov(as.formula(gsub("y", "Measure", formula)), data = aov.obj)
-      q[[paste(perc*100,"%",sep="")]] <- summary(test)[[1]]
-      hsd[[paste(perc*100,"%",sep="")]] <- TukeyHSD(test)
+      q[[sprintf("%1.2f", perc)]] <- summary(test)[[1]]
+      hsd[[sprintf("%1.2f", perc)]] <- TukeyHSD(test)
     }else{
       test <- aov(Measure ~ Group, data = aov.obj)
       
       test.summ <- summary(test)[[1]]
       
       #Input results into table
-      q[paste(perc*100,"%",sep=""),"F-statistic"] <- round(test.summ$`F value`[1],3)
-      q[paste(perc*100,"%",sep=""),"group.df"] <- test.summ$Df[1]
-      q[paste(perc*100,"%",sep=""),"residual.df"] <- test.summ$Df[2]
-      q[paste(perc*100,"%",sep=""),"p-value"] <- test.summ$`Pr(>F)`[1]
-      q[paste(perc*100,"%",sep=""),"p.eta.sq"] <- partial.eta(test.summ$`Sum Sq`[1],sum(test.summ$`Sum Sq`))
+      q[sprintf("%1.2f", perc),"F-statistic"] <- round(test.summ$`F value`[1],3)
+      q[sprintf("%1.2f", perc),"group.df"] <- test.summ$Df[1]
+      q[sprintf("%1.2f", perc),"residual.df"] <- test.summ$Df[2]
+      q[sprintf("%1.2f", perc),"p-value"] <- test.summ$`Pr(>F)`[1]
+      q[sprintf("%1.2f", perc),"p.eta.sq"] <- partial.eta(test.summ$`Sum Sq`[1],sum(test.summ$`Sum Sq`))
       
       #Tukey's HSD
       if(test.summ$`Pr(>F)`[1] < .05)
@@ -789,6 +1142,314 @@ partboot.one.test <- function (partboot.obj, formula = NULL, groups = NULL)
     tests$Q <- Q
   }
   
+  # Band-aid fix for case bootstrap (instead of node)
+  if(bootSemNeT.obj$type == "case")
+  {
+    tests <- t(sapply(tests,as.data.frame))
+    
+    tests[,-which(colnames(tests) == "Direction")] <- apply(tests[,-which(colnames(tests) == "Direction")],2,as.numeric)
+  }
+  
   return(tests)
 }
 #----
+
+#' Co-occurence (sub-routine for Goni)
+#' 
+#' @description Computes co-occurence of responses within
+#' a given window
+#' 
+#' @param data Matrix or data frame.
+#' Preprocessed verbal fluency data
+#' 
+#' @param window Numeric.
+#' Size of window to look for co-occurences in
+#' 
+#' @return A binary matrix 
+#' 
+#' @author Alexander Christensen <alexpaulchristensen@gmail.com>
+#' 
+#' @noRd
+# Co-occurrence matrix----
+# Updated 26.03.2020
+cooccur <- function(data, window = 2)
+{
+  # Data matrix
+  mat <- as.matrix(data)
+  
+  # Replace "" with NA
+  mat <- ifelse(mat == "", NA, mat)
+  
+  # Unique responses
+  uniq.resp <- sort(na.omit(unique(as.vector(mat))))
+  
+  # Initialize number matrix
+  num.mat <- mat
+  
+  # Replace responses with numbers
+  for(i in 1:nrow(mat))
+  {num.mat[i,] <- match(mat[i,], uniq.resp)}
+  
+  # Convert to numeric
+  num.mat <- apply(num.mat,2,as.numeric)
+  
+  # Add NAs the length of window to matrix
+  num.mat <- as.matrix(cbind(matrix(NA, nrow = nrow(num.mat), ncol = window),
+                             num.mat,
+                             matrix(NA, nrow = nrow(num.mat), ncol = window)))
+  
+  # Co-occurence matrix
+  co.mat <- matrix(0, nrow = length(uniq.resp), ncol = length(uniq.resp))
+  
+  # Loop through each word
+  for(i in 1:length(uniq.resp))
+    for(j in 1:nrow(data))
+    {
+      # Find word position
+      pos <- which(i == num.mat[j,])
+      
+      if(length(pos) != 0)
+      {
+        # Word neighbors
+        for(k in 1:length(pos))
+        {
+          if(k == 1)
+          {pos_neigh <- c((pos[k] - window:1), pos[k] + 1:window)
+          }else{pos_neigh <- c(pos_neigh, c((pos[k] - window:1), pos[k] + 1:window))}
+        }
+        
+        # Get neighboring words
+        words <- num.mat[j, pos_neigh]
+        
+        # Unique words (excluding self)
+        words <- setdiff(unique(words[!is.na(words)]),i)
+        
+        # Count co-occurence
+        co.mat[i, words] <- co.mat[i, words] + 1
+      }
+    }
+  
+  return(co.mat)
+}
+
+#' Relative frequency (sub-routine for Goni)
+#' 
+#' @description Computes relative frequency of each response
+#' 
+#' @param data Matrix or data frame.
+#' Preprocessed verbal fluency data
+#' 
+#' @return A vector of relative frequencies
+#' 
+#' @author Alexander Christensen <alexpaulchristensen@gmail.com>
+#' 
+#' @noRd
+# Relative frequency----
+# Updated 26.03.2020
+rel.freq <- function(data)
+{
+  # Data matrix
+  mat <- as.matrix(data)
+  
+  # Replace "" with NA
+  mat <- ifelse(mat == "", NA, mat)
+  
+  # Unique responses
+  uniq.resp <- sort(na.omit(unique(as.vector(mat))))
+  
+  # Initialize matrix
+  rel_freq <- numeric(length(uniq.resp))
+  
+  # Input into matrix
+  for(i in 1:length(uniq.resp))
+  {
+    # Initialize count
+    count <- 0
+    
+    # Target word
+    target <- uniq.resp[i]
+    
+    # Loop through cases
+    for(j in 1:nrow(mat))
+    {
+      # If target word is in case,
+      # then count it
+      if(length(which(target == mat[j,])) != 0)
+      {count <- count + 1}
+    }
+    
+    # Insert proportion of responses
+    rel_freq[i] <- count / nrow(mat)
+    
+  }
+  
+  return(rel_freq)
+}
+
+#' Statistical Co-occurence (sub-routine for Goni)
+#' 
+#' @description Computes the statistical co-occurence of responses+36
+#' 60.23
+#' 
+#' @param data Matrix or data frame.
+#' Preprocessed verbal fluency data
+#' 
+#' @param window Numeric.
+#' Size of window to look for co-occurences in.
+#' Defaults to \code{2}
+#' 
+#' @param alpha Numeric.
+#' Significance value.
+#' Defaults to \code{.05}
+#' 
+#' @return A binary matrix 
+#' 
+#' @author Alexander Christensen <alexpaulchristensen@gmail.com>
+#' 
+#' @importFrom stats binom.test
+#' 
+#' @noRd
+# Statistical Co-occurrence----
+# Updated 27.03.2020
+stat.cooccur <- function(data, window = 2, alpha = .05)
+{
+  # Check if the matrix is numeric
+  if(any(apply(data, 2, is.numeric)))
+  {stop("CN(): Only a response matrix can be used as input for 'data'")}
+  
+  # Data matrix
+  mat <- as.matrix(data)
+  
+  # Replace bad responses with NA
+  mat <- bad.response(mat)
+  
+  # Number of particpants
+  m <- nrow(mat)
+  
+  # Average number of responses
+  n <- round(mean(rowSums(!is.na(mat))),2)
+  
+  # Unique responses
+  uniq.resp <- sort(na.omit(unique(as.vector(mat))))
+  
+  # Number of unique responses
+  num_words <- length(uniq.resp)
+  
+  # Adjacency matrix
+  adj <- matrix(0, nrow = num_words, ncol = num_words)
+  
+  # Compute relative frequencies
+  rel_freq <- rel.freq(data)
+  
+  # Compute co-occurrences
+  co_occ <- cooccur(data, window = window)
+  
+  # Probability of random co-occurrence
+  rand_co <- (2 / (n * (n-1))) * ((window * n) - (window * (window + 1)/2))
+  
+  # Intialize words studied
+  words_studied <- numeric(num_words)
+  
+  for(i in 1:(num_words-1))
+    for(j in (i+1):num_words)
+    {
+      # Number of co-occurrences
+      num_co <- co_occ[i,j]
+      
+      if(num_co > 1)
+      {
+        # Update words studied
+        words_studied[i] <- 1
+        words_studied[j] <- 1
+        
+        # Threshold
+        thresh <- rel_freq[i] * rel_freq[j] * rand_co
+        
+        # Compute binomial confidence interval
+        int <- binom.test(num_co, m, alpha)$conf.int
+        
+        if(thresh < int[1])
+        {
+          adj[i,j] <- 1
+          adj[j,i] <- 1
+        }
+      }
+    }
+  
+  # Provide column names
+  colnames(adj) <- uniq.resp
+  row.names(adj) <- uniq.resp
+  
+  return(adj)
+}
+
+
+
+#' @noRd
+### cosine.R from lsa package (now archived)
+###
+### 2009-09-14:
+###   * added vector vs. matrix comparison
+###     to reduce data load when looking for associations
+### 2005-11-21:
+###   * added lazy calculation:
+###     calc only below diagonale; diag = 1; add t(co)
+###   * sqrt() over crossprod(x) and crossprod(y)
+### 2005-11-09:
+###   * bugfix cosvecs
+###   * integrated cosvecs into cosine by doing type dependant processing
+### 2005-08-26:
+###   * rewrote cosvecs function to crossprod
+### 
+cosine <- function( x, y=NULL ) {
+  
+  if ( is.matrix(x) && is.null(y) ) {
+    
+    co = array(0,c(ncol(x),ncol(x)))
+    f = colnames( x )
+    dimnames(co) = list(f,f)
+    
+    for (i in 2:ncol(x)) {
+      for (j in 1:(i-1)) {
+        co[i,j] = cosine(x[,i], x[,j])
+      }
+    }
+    co = co + t(co)
+    diag(co) = 1
+    
+    return (as.matrix(co))
+    
+  } else if ( is.vector(x) && is.vector(y) ) {
+    return ( crossprod(x,y) / sqrt( crossprod(x)*crossprod(y) ) )
+  } else if ( is.vector(x) && is.matrix(y) ) {
+    
+    co = vector(mode='numeric', length=ncol(y))
+    names(co) = colnames(y)
+    for (i in 1:ncol(y)) {
+      co[i] = cosine(x,y[,i]) 
+    }
+    return(co)
+    
+  }	else {
+    stop("argument mismatch. Either one matrix or two vectors needed as input.")
+  }
+  
+}
+
+#' @noRd
+# Function to replicate rows----
+# Updated 21.05.2020
+rep.rows <- function (mat, times)
+{
+  # New matrix
+  new.mat <- matrix(NA, nrow = 0, ncol = ncol(mat))
+  
+  # Loop through rows of matrix
+  for(i in 1:nrow(mat))
+  {new.mat <- rbind(new.mat, matrix(rep(mat[i,], times = times), ncol = ncol(mat), byrow = TRUE))}
+  
+  # Rename new matrix
+  colnames(new.mat) <- colnames(mat)
+  
+  return(new.mat)
+}

@@ -1,7 +1,7 @@
-#' Statistical tests for \code{\link[SemNeT]{partboot}}
+#' Statistical tests for \code{\link[SemNeT]{bootSemNeT}}
 #' 
 #' @description Computes statistical tests for partial bootstrapped
-#' networks from \code{\link[SemNeT]{partboot}}. Automatically
+#' networks from \code{\link[SemNeT]{bootSemNeT}}. Automatically
 #' computes \emph{t}-tests (\code{\link{t.test}}) or ANOVA
 #' (\code{\link{aov}}) including Tukey's HSD for pairwise comparisons
 #' (\code{\link{TukeyHSD}})
@@ -16,17 +16,17 @@
 #' A data frame specifying the groups to be input into the formula.
 #' The column names should be the variable names of interest. The
 #' groups should be in the same order as the groups input into
-#' \code{\link[SemNeT]{partboot}}
+#' \code{\link[SemNeT]{bootSemNeT}}
 #' 
-#' @param ... Object(s) from \code{\link[SemNeT]{partboot}}
+#' @param ... Object(s) from \code{\link[SemNeT]{bootSemNeT}}
 #' 
 #' @return Returns a list containing the objects:
 #' 
-#' \item{ASPL}{Test statistics for each percentage of nodes remaining for ASPL}
+#' \item{ASPL}{Test statistics for each proportion of nodes remaining for ASPL}
 #' 
-#' \item{CC}{Test statistics for each percentage of nodes remaining for CC}
+#' \item{CC}{Test statistics for each proportion of nodes remaining for CC}
 #' 
-#' \item{Q}{Test statistics for each percentage of nodes remaining for Q}
+#' \item{Q}{Test statistics for each proportion of nodes remaining for Q}
 #' 
 #' If two groups:
 #' 
@@ -47,9 +47,9 @@
 #' \item{Direction}{Direction of the effect. The argument \code{groups} will
 #' specify specifically which group is higher or lower on the measure. If no
 #' groups are input, then \code{"d"} and \code{"p"} are used to represent
-#' \code{data} and \code{paired} samples from \code{\link[SemNeT]{partboot}}, respectively}
+#' \code{data} and \code{paired} samples from \code{\link[SemNeT]{bootSemNeT}}, respectively}
 #' 
-#' Row names refer to the percentage of nodes remaining in bootstrapped networks
+#' Row names refer to the proportion of nodes remaining in bootstrapped networks
 #' 
 #' If three or more groups:
 #' 
@@ -68,11 +68,11 @@
 #' two <- sim.fluency(20)
 #' \donttest{
 #' # Run partial bootstrap networks
-#' two.result <- partboot(one, two, percent = .50, iter = 1000,
-#' sim = "cosine", cores = 2)
+#' two.result <- bootSemNeT(one, two, prop = .50, iter = 1000,
+#' sim = "cosine", cores = 2, type = "node", method = "TMFG")
 #' }
 #' # Compute tests
-#' partboot.test(two.result)
+#' test.bootSemNeT(two.result)
 #' 
 #' \donttest{
 #' # Two-way ANOVA example
@@ -83,36 +83,32 @@
 #' lolo <- sim.fluency(50, 500)
 #' 
 #' ## Create groups
-#' hihi.group <- cbind(rep("high",nrow(hihi)),rep("high",nrow(hihi)))
-#' hilo.group <- cbind(rep("high",nrow(hilo)),rep("low",nrow(hilo)))
-#' lohi.group <- cbind(rep("low",nrow(lohi)),rep("high",nrow(lohi)))
-#' lolo.group <- cbind(rep("low",nrow(lolo)),rep("low",nrow(lolo)))
-#' 
-#' ## Bind groups into single data frame
-#' groups <- rbind(hihi.group,
-#'                 hilo.group,
-#'                 lohi.group,
-#'                 lolo.group)
+#' groups <- matrix(
+#' c("high", "high",
+#' "high", "low",
+#' "low", "high",
+#' "low", "low"
+#' ), ncol = 2, byrow = TRUE)
 #' 
 #' ## Change column names (variable names)
 #' colnames(groups) <- c("gf","caq")
 #' 
-#' ## Change groups into data frame
-#' groups <- as.data.frame(groups)
-#' 
 #' ## Run partial bootstrap networks
-#' boot.fifty <- partboot(hihi, hilo, lohi, lolo, percent = .50)
-#' boot.sixty <- partboot(hihi, hilo, lohi, lolo, percent = .60)
+#' boot.fifty <- bootSemNeT(hihi, hilo, lohi, lolo, prop = .50,
+#' type = "node", method = "TMFG", cores = 2)
+#' boot.sixty <- bootSemNeT(hihi, hilo, lohi, lolo, prop = .60,
+#' type = "node", method = "TMFG", cores = 2)
 #' 
 #' ## Compute tests
-#' partboot.test(boot.fifty, boot.sixty, formula = "y ~ gf*caq", groups = groups)
+#' test.bootSemNeT(boot.fifty, boot.sixty, formula = "y ~ gf*caq", groups = groups)
 #' }
 #' 
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
 #' 
 #' @export
 #Test: Partial Bootstrapped Network Statistics----
-partboot.test <- function (..., formula = NULL, groups = NULL)
+# Updated 22.05.2020
+test.bootSemNeT <- function (..., formula = NULL, groups = NULL)
 {
     #Obtain ... in a list
     input <- list(...)
@@ -120,8 +116,8 @@ partboot.test <- function (..., formula = NULL, groups = NULL)
     #Names of groups
     name <- unique(gsub("Summ","",gsub("Meas","",names(input[[1]]))))
     
-    #Remove percent and iter
-    name <- na.omit(gsub("iter",NA,gsub("percent",NA,name)))
+    #Remove proportion and iter
+    name <- na.omit(gsub("type",NA,gsub("iter",NA,gsub("prop",NA,name))))
     attr(name, "na.action") <- NULL
     
     #Length of groups
@@ -133,7 +129,7 @@ partboot.test <- function (..., formula = NULL, groups = NULL)
     #Number of input
     if(length(input)==1)
     {
-        res <- partboot.one.test(input[[1]])
+        res <- boot.one.test(input[[1]])
     }else{
         
         if(len == 2)
@@ -152,7 +148,7 @@ partboot.test <- function (..., formula = NULL, groups = NULL)
             for(i in 1:length(input))
             {
                 #Compute tests
-                test <- partboot.one.test(input[[i]])
+                test <- boot.one.test(input[[i]])
                 
                 #ASPL
                 aspl[[i]] <- test$ASPL
@@ -206,11 +202,11 @@ partboot.test <- function (..., formula = NULL, groups = NULL)
             #Loop through input
             for(i in 1:length(input))
             {
-                #Identify percent of nodes remaining
-                perc <- input[[i]]$percent
+                #Identify proportion of nodes remaining
+                perc <- input[[i]]$prop
                 
                 #Compute tests
-                test <- partboot.one.test(input[[i]], formula = formula, groups = groups)
+                test <- boot.one.test(input[[i]], formula = formula, groups = groups)
                 
                 if(is.null(formula))
                 {
@@ -233,16 +229,16 @@ partboot.test <- function (..., formula = NULL, groups = NULL)
                     hsd$Q[[q.row[i]]] <- test$Q$HSD
                 }else{
                     #ASPL
-                    aspl[[paste(perc*100,"%",sep="")]]$ANOVA <- test$ASPL$ANOVA[[1]]
-                    aspl[[paste(perc*100,"%",sep="")]]$HSD <- test$ASPL$HSD[[1]]
+                    aspl[[sprintf("%1.2f", perc)]]$ANOVA <- test$ASPL$ANOVA[[1]]
+                    aspl[[sprintf("%1.2f", perc)]]$HSD <- test$ASPL$HSD[[1]]
                     
                     #CC
-                    cc[[paste(perc*100,"%",sep="")]] <- test$CC$ANOVA[[1]]
-                    cc[[paste(perc*100,"%",sep="")]] <- test$CC$HSD[[1]]
+                    cc[[sprintf("%1.2f", perc)]]$ANOVA <- test$CC$ANOVA[[1]]
+                    cc[[sprintf("%1.2f", perc)]]$HSD <- test$CC$HSD[[1]]
                     
                     #Q
-                    q[[paste(perc*100,"%",sep="")]] <- test$Q$ANOVA[[1]]
-                    q[[paste(perc*100,"%",sep="")]] <- test$Q$HSD[[1]]
+                    q[[sprintf("%1.2f", perc)]]$ANOVA <- test$Q$ANOVA[[1]]
+                    q[[sprintf("%1.2f", perc)]]$HSD <- test$Q$HSD[[1]]
                     
                     hsd <- NULL
                 }

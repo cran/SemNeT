@@ -1,16 +1,16 @@
-# Binary response Matrices (Openness and Verbal Fluency)----
-#' Binary response Matrices (Openness and Verbal Fluency)
+# Groups for Openness and Verbal Fluency----
+#' Groups for Openness and Verbal Fluency
 #'
-#' Binary response matrices for the Animals verbal fluency data (\emph{n} = 516)
-#' from Christensen et al. (2018).
+#' Groups for the Animals verbal fluency data (\emph{n} = 516)
+#' from Christensen et al. (2018; see also \code{\link[SemNeT]{open.clean}}).
 #' 
-#' @name open.binary
+#' @name open.group
 #' 
 #' @docType data
 #' 
-#' @usage data(open.binary)
+#' @usage data(open.group)
 #' 
-#' @format open.binary (matrix, 516 x 367)
+#' @format open.group (vector, length = 516)
 #' 
 #' @keywords datasets
 #' 
@@ -21,6 +21,6 @@
 #' doi:\href{https://doi.org/10.1002/per.2157}{10.1002/per.2157}
 #' 
 #' @examples 
-#' data("open.binary")
+#' data("open.group")
 NULL
 #----

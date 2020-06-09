@@ -1,16 +1,16 @@
-# Binary response Matrices (Openness and Verbal Fluency)----
-#' Binary response Matrices (Openness and Verbal Fluency)
+# Cleaned response Matrices (Openness and Verbal Fluency)----
+#' Cleaned response Matrices (Openness and Verbal Fluency)
 #'
-#' Binary response matrices for the Animals verbal fluency data (\emph{n} = 516)
+#' Cleaned response matrices for the Animals verbal fluency data (\emph{n} = 516)
 #' from Christensen et al. (2018).
 #' 
-#' @name open.binary
+#' @name open.clean
 #' 
 #' @docType data
 #' 
-#' @usage data(open.binary)
+#' @usage data(open.clean)
 #' 
-#' @format open.binary (matrix, 516 x 367)
+#' @format open.clean (matrix, 516 x 35)
 #' 
 #' @keywords datasets
 #' 
@@ -21,6 +21,6 @@
 #' doi:\href{https://doi.org/10.1002/per.2157}{10.1002/per.2157}
 #' 
 #' @examples 
-#' data("open.binary")
+#' data("open.clean")
 NULL
 #----

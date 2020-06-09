@@ -11,7 +11,7 @@ one.result (list, length = 4)
 data(one.result)
 }
 \description{
-A result of \code{\link[SemNeT]{partboot}} from a simulated dataset
+A result of \code{\link[SemNeT]{bootSemNeT}} from a simulated dataset
 }
 \examples{
 data("one.result")

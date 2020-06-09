@@ -377,12 +377,12 @@ summary {
 </div>
 <div id="visualization-of-semantic-networks" class="section level2">
 <h2>Visualization of Semantic Networks</h2>
-<p>Visualizations of networks are qualitative; however, they provide intuitive depictions of each network’s structure. There are several R packages <span class="citation">(e.g., <em>igraph</em>, <em>qgraph</em>, and <em>networkD3</em>; Allaire, Gandrud, Russell, &amp; Yetman, 2017)</span> and other software <span class="citation">(e.g., <em>Cytoscape</em>; Shannon et al., 2003)</span> that are capable of visualizing networks. For our example, we’ll show how to use the <code>compare.nets</code> function in <em>SemNeT</em> to visually compare our two networks.</p>
-<p><code>compare.nets</code> allows the user to visually compare any number of networks. The networks are plotted side-by-side using the R packages <em>qgraph</em> and <em>networktools</em> <span class="citation">(Jones, 2019)</span>. An important consideration when plotting the networks is the layout. The layout affects how the nodes are positioned with respect to one another on a 2D layout. Some layouts are useful for visualizing the networks only, while other layouts may have more meaningful representations of the distances between nodes <span class="citation">(Jones, Mair, &amp; McNally, 2018)</span>.</p>
+<p>Visualizations of networks are qualitative; however, they provide intuitive depictions of each network’s structure. There are several R packages <span class="citation">(e.g., <em>igraph</em>, <em>qgraph</em>, and <em>networkD3</em>; Allaire, Gandrud, Russell, &amp; Yetman, 2017)</span> and other software <span class="citation">(e.g., <em>Cytoscape</em>; Shannon et al., 2003)</span> that are capable of visualizing networks. For our example, we’ll show how to use the <code>compare_nets</code> function in <em>SemNeT</em> to visually compare our two networks.</p>
+<p><code>compare_nets</code> allows the user to visually compare any number of networks. The networks are plotted side-by-side using the R packages <em>qgraph</em> and <em>networktools</em> <span class="citation">(Jones, 2019)</span>. An important consideration when plotting the networks is the layout. The layout affects how the nodes are positioned with respect to one another on a 2D layout. Some layouts are useful for visualizing the networks only, while other layouts may have more meaningful representations of the distances between nodes <span class="citation">(Jones, Mair, &amp; McNally, 2018)</span>.</p>
 <p>In general, nodes in the network are depicted with circles and their labels denote what each node represents. In our example, each label denotes a unique animal response given by the sample (see Figure 6). The edges in the network are depicted by lines, which may vary in size, representing the magnitude of association, and color (e.g., green and red), representing the sign of the association (e.g., positive or negative, respectively). Many visualization algorithms will use the magnitude of association to depict the distance between nodes in the network.</p>
 <p>A common visualization algorithm in the psychological literature is the Fruchterman-Reingold algorithm <span class="citation">(as known as a force-directed algorithm; Fruchterman &amp; Reingold, 1991)</span>. This algorithm uses the magnitude of associations to map the distances between nodes. To visualize the networks in our example using this algorithm, the following code should be run:</p>
 <pre class="r"><code># Visually compare networks
-compare.nets(net.low, net.high,
+compare_nets(net.low, net.high,
              title = list(&quot;Low Openness&quot;, &quot;High Openness&quot;),
              config = &quot;spring&quot;, weighted = FALSE)</code></pre>
 <div class="figure" style="text-align: center">
@@ -391,7 +391,7 @@ compare.nets(net.low, net.high,
 Comparison of low (left) and high (right) openness to experience semantic networks based on the Fruchterman-Reingold algorithm
 </p>
 </div>
-<p>The <code>compare.nets</code> visualization function depicts the networks side-by-side (Figure 6). If there are more than two networks, then <code>compare.nets</code> will automatically optimize the plot layout for comparison. There is an option to add titles using the <code>title</code> argument, which must be input as a list object. If no titles are input, then the name(s) of the object(s) will be used (e.g., <code>net.low</code> and <code>net.high</code>). The <code>config</code> argument can be used to select the layout. This defaults to <code>&quot;spring&quot;</code>, which is the Fruchterman-Reingold layout. Other layouts that are applied by the <em>qgraph</em> package can also be used (see <code>?qgraph</code>). Finally, the <code>weighted</code> argument can be used to visualize the networks as weighted (<code>TRUE</code>) or unweighted (<code>FALSE</code>). In our example, we specified the networks to be unweighted (<code>weighted = FALSE</code>). Because the networks are unweighted, the lines are black (rather than green and red based on sign) and the thickness of the edges are all the same (rather than size differences based on magnitude of association).</p>
+<p>The <code>compare_nets</code> visualization function depicts the networks side-by-side (Figure 6). If there are more than two networks, then <code>compare_nets</code> will automatically optimize the plot layout for comparison. There is an option to add titles using the <code>title</code> argument, which must be input as a list object. If no titles are input, then the name(s) of the object(s) will be used (e.g., <code>net.low</code> and <code>net.high</code>). The <code>config</code> argument can be used to select the layout. This defaults to <code>&quot;spring&quot;</code>, which is the Fruchterman-Reingold layout. Other layouts that are applied by the <em>qgraph</em> package can also be used (see <code>?qgraph</code>). Finally, the <code>weighted</code> argument can be used to visualize the networks as weighted (<code>TRUE</code>) or unweighted (<code>FALSE</code>). In our example, we specified the networks to be unweighted (<code>weighted = FALSE</code>). Because the networks are unweighted, the lines are black (rather than green and red based on sign) and the thickness of the edges are all the same (rather than size differences based on magnitude of association).</p>
 <p>Based on Figure 6, it appears that the high openness to experience group has a more tightly clustered and interconnected network; however, as mentioned before, these visualizations are generally qualitative and not meant for interpretation. Therefore, regardless of whether these depictions appear to have meaningful differences, quantitative analysis is necessary to determine whether there are truly differences.</p>
 </div>
 <div id="global-network-measures" class="section level2">
@@ -603,29 +603,38 @@ Q
 <p>Thus, this process estimates and compares partial networks from the full networks. The rationale for this approach is twofold: (1) if the full networks differ from each other, then any partial network consisting of the same nodes should also be different, and thus (2) the generation of many partial networks allows for a direct statistical comparison between the full networks <span class="citation">(Kenett et al., 2016b)</span>.</p>
 <p>Similar to the test against random networks, these iterated partial networks form a sampling distribution of the global network measures for both groups, but solely based on the empirical data. These sampling distributions can then be statistically compared using a <em>t</em>-test (or ANOVA) to determine whether the global network measures are different between the compared networks. In a recent implementation, we applied this approach by retaining a gradation of nodes <span class="citation">(50%, 60%, 70%, 80%, and 90%; Christensen, Kenett, Cotter, Beaty, &amp; Silvia, 2018)</span>. This implementation allows for trends in the distributions to be revealed. To perform this analysis, the function <code>partboot</code> can be used.</p>
 <pre class="r"><code>#Arguments for &#39;partboot&#39; function
-partboot(..., percent, sim, weighted = FALSE,
-         iter = 1000, cores)</code></pre>
-<p>The first argument, <code>...</code>, is for the input of the equated group binary response matrices (e.g., <code>equate.low</code> and <code>equate.high</code>). The <code>...</code> argument is used across all <code>partboot</code> associated functions to allow for the plotting and statistical testing of any number of groups involved in the analysis. <code>percent</code> refers to the number of nodes that should <em>remain</em> in the network (e.g., <code>percent = .50</code>). The next argument, <code>sim</code>, selects the similarity measure (defaults to <code>&quot;cosine&quot;</code>). Next, the <code>weighted</code> argument decides whether weighted or unweighted network measures should be computed (defaults to <code>FALSE</code> or unweighted measures). <code>iter</code> is the number of bootstrap iterations to be completed (defaults to <code>1000</code>). Finally, <code>cores</code> refers to the number of processor cores to use in the parallelization of the analysis (defaults to the computer’s maximum number of cores minus one). Below is code to run the analysis for retaining 50%, 60%, 70%, 80%, and 90% of nodes from the groups, respectively:</p>
+bootSemNeT(..., method = c(&quot;CN&quot;, &quot;NRW&quot;, &quot;PF&quot;, &quot;TMFG&quot;),
+         type = c(&quot;case&quot;, &quot;node&quot;), prop, sim,
+         weighted = FALSE, iter = 1000, cores)</code></pre>
+<p>The first argument, <code>...</code>, is for the input of the equated group binary response matrices (e.g., <code>equate.low</code> and <code>equate.high</code>). The <code>...</code> argument is used across all <code>bootSemNeT</code> associated functions to allow for the plotting and statistical testing of any number of groups involved in the analysis. <code>percent</code> refers to the number of nodes that should <em>remain</em> in the network (e.g., <code>prop = .50</code>). The next argument, <code>sim</code>, selects the similarity measure (defaults to <code>&quot;cosine&quot;</code>). Next, the <code>weighted</code> argument decides whether weighted or unweighted network measures should be computed (defaults to <code>FALSE</code> or unweighted measures). <code>iter</code> is the number of bootstrap iterations to be completed (defaults to <code>1000</code>). Finally, <code>cores</code> refers to the number of processor cores to use in the parallelization of the analysis (defaults to the computer’s maximum number of cores minus one). Below is code to run the analysis for retaining 50%, 60%, 70%, 80%, and 90% of nodes from the groups, respectively:</p>
 <pre class="r"><code># Compute partial bootstrap network analysis
+## Set seed for reproducibility
+set.seed(42)
+
 ## 50% of nodes remaining in network
 boot.fifty &lt;- partboot(equate.low, equate.high,
-                       percent = .50, iter = 1000,
+                       method = &quot;TMFG&quot;, type = &quot;node&quot;,
+                       prop = .50, iter = 1000,
                        sim = &quot;cosine&quot;, cores = 4)
 ## 60% of nodes remaining in network
 boot.sixty &lt;- partboot(equate.low, equate.high,
-                       percent = .60, iter = 1000,
+                       method = &quot;TMFG&quot;, type = &quot;node&quot;,
+                       prop = .60, iter = 1000,
                        sim = &quot;cosine&quot;, cores = 4)
 ## 70% of nodes remaining in network
 boot.seventy &lt;- partboot(equate.low, equate.high,
-                         percent = .70, iter = 1000,
+                         method = &quot;TMFG&quot;, type = &quot;node&quot;,
+                         prop = .70,, iter = 1000,
                          sim = &quot;cosine&quot;, cores = 4)
 ## 80% of nodes remaining in network
 boot.eighty &lt;- partboot(equate.low, equate.high,
-                        percent = .80, iter = 1000,
+                        method = &quot;TMFG&quot;, type = &quot;node&quot;,
+                        prop = .80, iter = 1000,
                         sim = &quot;cosine&quot;, cores = 4)
 ## 90% of nodes remaining in network
 boot.ninety &lt;- partboot(equate.low, equate.high,
-                        percent = .90, iter = 1000,
+                        method = &quot;TMFG&quot;, type = &quot;node&quot;,
+                        prop = .90, iter = 1000,
                         sim = &quot;cosine&quot;, cores = 4)</code></pre>
 <p>For more than two groups, the additional equated binary responses matrices can be added as input. <code>partboot</code> will perform the same analyses—selecting the same subset of nodes—for all binary response matrices that are input. The computation time for each implementation increases with the number of nodes that remain in the network. Overall, the computation is relatively fast, with computing times for each implementation ranging from 5 to 10 minutes (around 40 minutes in total; defined for a computer with the specifications: Intel Core i5-4300M 2.60GHz and 16GB DDR3 RAM). Once the partial bootstrap network measures are computed, they can then be visualized using the <code>plot</code> function:</p>
 <pre class="r"><code># Plot bootstrap results

@@ -1,6 +1,201 @@
+#' Read in Common Data File Extensions (from \code{\link{SemNetCleaner}})
+#' 
+#' @description A single function to read in common data file extensions.
+#' Note that this function is specialized for reading in text data in the
+#' format necessary for functions in SemNetCleaner
+#' 
+#' File extensions supported:
+#' \itemize{
+#' \item{.Rdata} \item{.rds} \item{.csv} \item{.xlsx}
+#' \item{.xls} \item{.sav} \item{.txt} \item{.mat}
+#' }
+#'
+#' @param file Character.
+#' A path to the file to load.
+#' Defaults to interactive file selection using \code{\link{file.choose}}
+#' 
+#' @param header Boolean.
+#' A logical value indicating whether the file contains the
+#' names of the variables as its first line.
+#' If missing, the value is determined from the file format:
+#' header is set to \code{TRUE} if and only if the first row
+#' contains one fewer field than the number of columns
+#' 
+#' @param sep Character.
+#' The field separator character.
+#' Values on each line of the file are separated by this character.
+#' If sep = "" (the default for \code{\link{read.table}}) the separator
+#' is a 'white space', that is one or more spaces, tabs, newlines or
+#' carriage returns
+#' 
+#' @param ... Additional arguments.
+#' Allows for additional arguments to be passed onto
+#' the respective read functions. See documentation in the list below:
+#' 
+#' \itemize{
+#' \item{.Rdata}
+#' {\code{\link{load}}}
+#' \item{.rds}
+#' {\code{\link{readRDS}}}
+#' \item{.csv}
+#' {\code{\link[utils]{read.table}}}
+#' \item{.xlsx}
+#' {\code{\link[readxl]{read_excel}}}
+#' \item{.xls}
+#' {\code{\link[readxl]{read_excel}}}
+#' \item{.sav}
+#' {\code{\link[foreign]{read.spss}}}
+#' \item{.txt}
+#' {\code{\link[utils]{read.table}}}
+#' \item{.mat}
+#' {\code{\link[R.matlab]{readMat}}}
+#' }
+#' 
+#' @return A data frame containing a representation of the data in the file.
+#' If file extension is ".Rdata", then data will be read to the global environment
+#'
+#' @examples 
+#' # Use this example for your data
+#' if(interactive())
+#' {read.data()}
+#' 
+#' # Example for CRAN tests
+#' ## Create test data
+#' test1 <- c(1:5, "6,7", "8,9,10")
+#' 
+#' ## Path to temporary file
+#' tf <- tempfile()
+#' 
+#' ## Create test file
+#' writeLines(test1, tf)
+#' 
+#' ## Read in data
+#' read.data(tf)
+#' 
+#' # See documentation of respective R functions for specific examples
+#' 
+#' @references 
+#' # R Core Team
+#' 
+#' R Core Team (2019). R: A language and environment for
+#' statistical computing. R Foundation for Statistical Computing,
+#' Vienna, Austria. URL https://www.R-project.org/.
+#' 
+#' # readxl
+#' 
+#' Hadley Wickham and Jennifer Bryan (2019). readxl: Read Excel
+#' Files. R package version 1.3.1.
+#' https://CRAN.R-project.org/package=readxl
+#' 
+#' # R.matlab
+#' 
+#' Henrik Bengtsson (2018). R.matlab: Read and Write MAT Files
+#' and Call MATLAB from Within R. R package version 3.6.2.
+#' https://CRAN.R-project.org/package=R.matlab
+#' 
+#' @author Alexander Christensen <alexpaulchristensen@gmail.com>
+#' 
+#' @importFrom utils read.table read.csv
+#' @importFrom tools file_ext
+#' 
+#' @noRd
+# Read data----
+# Updated 15.04.2020
+read.data <- function (file = file.choose(), header = TRUE, sep = ",", ...)
+{
+    # Grab extension
+    ext <- tolower(file_ext(file))
+    
+    # Report error
+    if(!ext %in% c("rdata", "rds", "csv", "xlsx",
+                   "xls", "sav", "txt", "mat", ""))
+    {stop("File extension not supported")}
+    
+    # Determine data load
+    if(ext != "")
+    {
+        switch(ext,
+               rdata = load(file, envir = .GlobalEnv),
+               rds = readRDS(file),
+               csv = read.csv(file, header = header, sep = sep, as.is = TRUE, ...),
+               xlsx = as.data.frame(readxl::read_xlsx(file, col_names = header, ...)),
+               xls = as.data.frame(readxl::read_xls(file, col_names = header, ...)),
+               sav = foreign::read.spss(file, to.data.frame = TRUE, stringAsFactors = FALSE, ...),
+               txt = read.table(file, header = header, sep = sep, ...),
+               mat = as.data.frame(R.matlab::readMat(file, ...))
+        )
+    }else{read.table(file, header = header, sep = sep, ...)}
+}
+
+#' Equate Groups for Shiny
+#' 
+#' @description A function to "equate" multiple response matrices to one another.
+#' \emph{N} number of groups are matched based on their responses so
+#' that every group has the same responses in their data
+#' 
+#' @param dat List.
+#' Binary response matrices to be equated
+#' 
+#' @return This function returns a list containing the
+#' equated binary response matrices in the order they were input.
+#' The response matrices are labeled as the object name they were
+#' entered with
+#' 
+#' @author Alexander Christensen <alexpaulchristensen@gmail.com>
+#' 
+#' @noRd
+#'
+# Eqaute for Shiny----
+# Updated 20.03.2020
+equateShiny <- function(dat)
+{
+    # Equate function
+    equat <- function (rmatA, rmatB)
+    {
+        while(length(colnames(rmatA))!=length(colnames(rmatB)))
+        {
+            if(length(colnames(rmatA))>=length(colnames(rmatB)))
+            {rmatA<-rmatA[,(!is.na(match(colnames(rmatA),colnames(rmatB))))]
+            }else if(length(colnames(rmatB))>=length(colnames(rmatA)))
+            {rmatB<-rmatB[,(!is.na(match(colnames(rmatB),colnames(rmatA))))]
+            }else if(all(match(colnames(rmatA),colnames(rmatB))))
+            {print("Responses match")}
+        }
+        
+        return(list(rmatA=rmatA,rmatB=rmatB))
+    }
+    
+    name <- names(dat)
+    
+    datalist <- dat
+    
+    len <- length(datalist)
+    
+    if(len>2)
+    {
+        first <- datalist[[1]]
+        eq <- equat(first,datalist[[2]])$rmatA
+        
+        for(i in 2:(len-1))
+        {eq <- equat(eq,datalist[[(i+1)]])$rmatA}
+        
+        finlist <- list()
+        
+        for(j in 1:len)
+        {finlist[[name[j]]] <- equat(eq,datalist[[j]])$rmatB}
+        
+    }else if(len==2)
+    {
+        finlist <- equat(datalist[[1]],datalist[[2]])
+        names(finlist) <- name
+    }else{stop("Must be at least two datasets as input")}
+    
+    return(finlist)
+}
+
 #' Plots Networks for Comparison in Shiny
 #' 
-#' @description Uses \code{\link[qgraph]{qgraph}} and \code{\link[networktools]{MDSnet}}
+#' @description Uses \code{\link[qgraph]{qgraph}}
 #' to plot networks. Accepts any number of networks and will organize the plots
 #' in the number of side-by-side columns using the heuristic of taking the square root of the number of 
 #' input and rounding down to the nearest integer (i.e., \code{floor(sqrt(length(input)))}).
@@ -22,7 +217,7 @@
 #' Characters denoting titles of plots
 #' 
 #' @param config Character.
-#' Defaults to \code{\link[networktools]{MDSnet}}.
+#' Defaults to \code{"spring"}.
 #' See \code{\link[qgraph]{qgraph}} for more options
 #' 
 #' @param placement Character.
@@ -50,14 +245,13 @@
 #' See \code{\link[qgraph]{qgraph}} for possible arguments
 #' 
 #' @return Plots networks using \code{\link[qgraph]{qgraph}}
-#' or \code{\link[networktools]{MDSnet}}
 #' 
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
 #' 
 #' @noRd
-#Compare Graphs----
+# Compare Graphs----
 # Updated 20.03.2020
-compare.netShiny <- function (dat, title, config,
+compare_netShiny <- function (dat, title, config,
                               placement = c("match", "default"),
                               weighted = FALSE,
                               qgraph.args = list())
@@ -77,8 +271,8 @@ compare.netShiny <- function (dat, title, config,
     {stop("Argument 'title' only takes list objects")}
     
     if(missing(config))
-    {config <- "MDS"
-    }else{config <- config}
+    {config <- tolower("spring")
+    }else{config <- tolower(config)}
     
     if(missing(placement))
     {placement <- "default"
@@ -102,9 +296,10 @@ compare.netShiny <- function (dat, title, config,
         diag(datalist[[i]]) <- 0
         
         #Create graph layouts
-        if(config == "MDS")
-        {layouts[[i]] <- qgraph::qgraph(datalist[[i]],DoNotPlot=TRUE)
-        }else{layouts[[i]] <- qgraph::qgraph(datalist[[i]],DoNotPlot=TRUE,layout=config)}
+        #if(config == "mds")
+        #{layouts[[i]] <- qgraph::qgraph(datalist[[i]],DoNotPlot=TRUE)
+        #}else{
+        layouts[[i]] <- qgraph::qgraph(datalist[[i]],DoNotPlot=TRUE,layout=config)#}
         
         #Get labels
         labs[[i]] <- as.factor(colnames(datalist[[i]]))
@@ -178,31 +373,98 @@ compare.netShiny <- function (dat, title, config,
     res$labs <- labs
     res$layouts <- layouts
     
+    class(res) <- "compareShiny"
+    
     return(res)
 }
 #----
 
 
-#' @noRd
+#' Plots Networks for Comparison from Shiny
+#' 
+#' @description Uses \code{\link[qgraph]{qgraph}}
+#' to plot networks. Accepts any number of networks and will organize the plots
+#' in the number of side-by-side columns using the heuristic of taking the square root of the number of 
+#' input and rounding down to the nearest integer (i.e., \code{floor(sqrt(length(input)))}).
+#' Performs the same operations as \code{\link[SemNeT]{compare_nets}}
+#' 
+#' \strong{Examples}
+#' \itemize{
+#' \item{3 networks:}
+#' {1 x 3}
+#' \item{6 networks:}
+#' {2 x 3}
+#' \item{9 networks:}
+#' {3 x 3}
+#' }
+#' 
+#' @param x Shiny result \code{resultShiny$comparePlot}
+#' 
+#' @param ... Additional arguments
+#' 
+#' @return Plots networks using \code{\link[qgraph]{qgraph}}
+#' 
+#' @examples
+#' # Simulate Datasets
+#' one <- sim.fluency(10)
+#' two <- sim.fluency(10)
+#' 
+#' # Compute similarity matrix
+#' cos1 <- similarity(one, method = "cosine")
+#' cos2 <- similarity(two, method = "cosine")
+#' 
+#' # Compute networks using NetworkToolbox
+#' net1 <- NetworkToolbox::TMFG(cos1)$A
+#' net2 <- NetworkToolbox::TMFG(cos2)$A
+#' 
+#' # Compare networks
+#' compare_nets(net1, net2, title = list("One", "Two"), config = "spring")
+#' 
+#' # Change edge colors
+#' compare_nets(net1, net2, title = list("One", "Two"),
+#' config = "spring", qgraph.args = list(edge.color = "blue"))
+#' 
+#' @references 
+#' Epskamp, S., Cramer, A. O. J., Waldorp, L. J., Schmittmann, V. D., & Borsboom, D. (2012).
+#' qgraph: Network visualizations of relationships in psychometric data.
+#' \emph{Journal of Statistical Software}, \emph{48}, 1-18.
+#' Retrieved from: http://www.jstatsoft.org/v48/i04/
+#' 
+#' Jones, P. J. (2019).
+#' networktools: Tools for Identifying Important Nodes in Networks.
+#' R package version 1.2.1.
+#' \href{https://CRAN.R-project.org/package=networktools}{https://CRAN.R-project.org/package=networktools}
+#' 
+#' Jones, P. J., Mair, P., & McNally, R. (2018).
+#' Visualizing psychological networks: A tutorial in R.
+#' \emph{Frontiers in Psychology}, \emph{9}, 1742.
+#' \href{https://doi.org/10.3389/fpsyg.2018.01742}{10.3389/fpsyg.2018.01742}
+#' 
+#' @author Alexander Christensen <alexpaulchristensen@gmail.com>
+#' 
+#' @export
 #Compare Graphs----
-# Updated 20.03.2020
-compare.netplotShiny <- function (res)
+# Updated 05.04.2020
+plot.compareShiny <- function (x, ...)
 {
-    for(i in 1:length(res$datalist))
+    for(i in 1:length(x$datalist))
     {
         #Network specific arguments
         ##Networks
-        if(res$config == "MDS")
-        {res$qgraph.args$qgraph_net <- res$layouts[[i]]
-        }else{res$qgraph.args$input <- res$layouts[[i]]}
+        #if(x$config == "mds")
+        #{x$qgraph.args$qgraph_net <- x$layouts[[i]]
+        #}else{
+        x$qgraph.args$input <- x$layouts[[i]]
+        #}
         ##Network title and labels
-        res$qgraph.args$title <- res$title[[i]]
-        res$qgraph.args$labels <- res$labs[[i]]
+        x$qgraph.args$title <- x$title[[i]]
+        x$qgraph.args$labels <- x$labs[[i]]
         
         #Generate plot
-        ifelse(res$config == "MDS",
-               do.call(networktools::MDSnet, args = res$qgraph.args),
-               do.call(qgraph::qgraph, args = res$qgraph.args))
+        #ifelse(x$config == "mds",
+               #do.call(networktools::MDSnet, args = x$qgraph.args),
+               do.call(qgraph::qgraph, args = x$qgraph.args)
+               #)
     }
 }
 #----
@@ -248,24 +510,12 @@ randnet.testShiny <- function (dat, iter, cores)
     #Get names of networks
     name <- names(dat)
     
-    #Create list of input
-    datalist <- dat
+    #Initialize data list
+    data.list <- vector("list", length = length(name))
     
-    #Number of nodes
-    nodes <- list()
-    
-    for(i in 1:length(datalist))
-    {nodes[[i]] <- ncol(datalist[[i]])}
-    
-    #Make diagonals zero
-    for(i in 1:length(datalist))
-    {diag(datalist[[i]]) <- 0}
-    
-    #Number of edges
-    edges <- list()
-    
-    for(i in 1:length(datalist))
-    {edges[[i]] <- sum(colSums(NetworkToolbox::binarize(datalist[[i]])))/2}
+    for(i in 1:length(name))
+        for(j in 1:iter)
+        {data.list[[i]][[j]] <- dat[[i]]}
     
     #Initialize random networks list
     rand.list <- vector("list", length = length(name))
@@ -274,28 +524,15 @@ randnet.testShiny <- function (dat, iter, cores)
     #Message for begin random networks
     message("Generating random networks...", appendLF = FALSE)
     
-    for(i in 1:length(datalist))
-    {
-        #Initialize count
-        count <- 0
-        
-        repeat{
-            
-            #Increase count
-            count <- count + 1
-            
-            #Generate random network
-            rand.list[[i]][[count]] <- NetworkToolbox::randnet(nodes[[i]], edges[[i]])
-            
-            #Break out of repeat when
-            #count reaches iter
-            if(count == iter)
-            {break}
-        }
-    }
+    #Parallel processing
+    cl <- parallel::makeCluster(cores)
     
-    #Message for end of random networks
-    message("done", appendLF = TRUE)
+    #Export variables
+    parallel::clusterExport(cl, c("data.list", "rand.list"), envir = environment())
+    
+    #Compute random networks
+    for(i in 1:length(data.list))
+    {rand.list[[i]] <- pbapply::pblapply(X = data.list[[i]], FUN = function(X){randnet(A = X)}, cl = cl)}
     
     #Message for begin of network measures
     message("Computing network measures...\n", appendLF = FALSE)
@@ -304,13 +541,10 @@ randnet.testShiny <- function (dat, iter, cores)
     net.meas <- vector("list", length = length(name))
     names(net.meas) <- name
     
-    #Parallel processing
-    cl <- parallel::makeCluster(cores)
-    
     #Export variables
-    parallel::clusterExport(cl, c("rand.list", "net.meas"), envir = environment())
+    parallel::clusterExport(cl, c("net.meas"), envir = environment())
     
-    for(i in 1:length(datalist))
+    for(i in 1:length(data.list))
     {
         #Compute network measures
         net.meas[[i]] <- pbapply::pbsapply(X = rand.list[[i]], FUN = semnetmeas, cl = cl)
@@ -324,7 +558,7 @@ randnet.testShiny <- function (dat, iter, cores)
     names(res) <- name
     
     #Compute significance tests
-    for(i in 1:length(datalist))
+    for(i in 1:length(data.list))
     {
         sig.mat <- matrix(0, nrow = 3, ncol = 3)
         row.names(sig.mat) <- c("ASPL","CC","Q")
@@ -335,7 +569,7 @@ randnet.testShiny <- function (dat, iter, cores)
         sig.mat[,"SD.rand"] <- round(apply(net.meas[[i]],1,sd),4)
         
         #Compute semantic network measures for network
-        meas <- semnetmeas(datalist[[i]])
+        meas <- semnetmeas(dat[[i]])
         
         ##ASPL
         z.aspl <- (meas["ASPL"] - sig.mat["ASPL","M.rand"]) / sig.mat["ASPL","SD.rand"]
@@ -352,20 +586,56 @@ randnet.testShiny <- function (dat, iter, cores)
     }
     
     return(res)
+    
+    return(res)
 }
 #----
 
-#' Partial Bootstrapped Semantic Network Analysis
+#' Bootstrapped Semantic Network Analysis for Shiny
 #' 
-#' @description Bootstraps (without replacement) the nodes in the network and computes global network characteristics
+#' @description Bootstrap techniques to generate
+#' semantic networks and compute global network characteristics
 #' 
-#' @param dat List.
-#' Matrices or data frames.
-#' Binary response matrices (e.g., \code{binary} output from
-#' \code{\link[SemNetCleaner]{textcleaner}})
+#' @param dat Matrices or data frames.
+#' Cleaned response matrices (e.g., \code{responses$clean} from
+#' \code{\link[SemNetCleaner]{textcleaner}}) or  binary response matrices
+#' (e.g., \code{binary} output from \code{\link[SemNetCleaner]{textcleaner}})
 #' 
-#' @param percent Numeric.
-#' Percent of nodes to remain in the network.
+#' @param method Character.
+#' Network estimation method to use.
+#' Current options include:
+#' 
+#' \itemize{
+#' \item{\code{\link[NetworkToolbox]{TMFG}}}
+#' {Triangulated Maximally Filtered Graph}
+#' 
+#' \item{\code{\link[SemNeT]{CN}}}
+#' {Community Network}
+#' 
+#' \item{\code{\link[SemNeT]{NRW}}}
+#' {Naive Random Walk}
+#' 
+#' \item{\code{\link[SemNeT]{PF}}}
+#' {Pathfinder}
+#' 
+#' }
+#' 
+#' @param type Character.
+#' Type of bootstrap to perform
+#' 
+#' \itemize{
+#' \item{\code{node}}
+#' {Generates partial networks based on dropping a certain
+#' proportion of nodes (see argument \code{prop})}
+#' 
+#' \item{\code{case}}
+#' {Samples with replacement the same number of participants
+#' as in the original dataset}
+#' }
+#' 
+#' @param prop Numeric.
+#' \strong{Only} for \code{type = "node"}.
+#' Proportion of nodes to remain in the network.
 #' Defaults to \code{.50}
 #' 
 #' @param sim Character.
@@ -398,7 +668,7 @@ randnet.testShiny <- function (dat, iter, cores)
 #' \item{dataSumm}{Summary statistics across the bootrapped samples for the
 #' network input in the \code{data} argument}
 #' 
-#' \item{percent}{Outputs the percent used from the \code{percent} argument}
+#' \item{prop}{Outputs the proportion used from the \code{prop} argument}
 #' 
 #' \item{iter}{Outputs the number of bootstrapped samples
 #' used from the \code{iter} argument}
@@ -412,14 +682,16 @@ randnet.testShiny <- function (dat, iter, cores)
 #' 
 #' \item{pairedSumm}{Summary statistics across the bootrapped samples for the
 #' network input in the \code{paired} argument}
-#' 
+#'
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
 #' 
 #' @noRd
-#Partial Bootstrapped Semantic Network Analysis----
-#Updated 20.03.2020
-partbootShiny <- function (dat, percent = .50, sim, weighted = FALSE,
-                      iter = 1000, cores)
+#Bootstrapped Semantic Network Analysis----
+#Updated 05.04.2020
+bootSemNeTShiny <- function (dat, method = c("CN", "NRW", "PF", "TMFG"),
+                        type = c("case", "node"),
+                        prop = .50, sim, weighted = FALSE,
+                        iter = 1000, cores)
 {
     ####Missing arguments####
     if(missing(sim))
@@ -437,16 +709,15 @@ partbootShiny <- function (dat, percent = .50, sim, weighted = FALSE,
     #Create list of input
     datalist <- dat
     
-    #Check that all data have same number of nodes
-    if(length(unique(unlist(lapply(datalist,ncol))))!=1)
-    {stop("All datasets must have the same number of columns")}
-    
     #Number of nodes in full data
     full <- unique(unlist(lapply(datalist,ncol)))
     
     #######################
     #### GENERATE DATA ####
     #######################
+    
+    #Let user know data is being generated
+    message("Generating data...", appendLF = FALSE)
     
     for(i in 1:length(name))
     {
@@ -461,11 +732,35 @@ partbootShiny <- function (dat, percent = .50, sim, weighted = FALSE,
             #Increase count
             count <- count + 1
             
-            #Randomly sample nodes
-            rand <- sample(full, (full*percent), replace=FALSE)
-            
-            #Input into data list
-            new[[count]] <- get(name[i], envir = environment())[,rand]
+            if(type == "node")
+            {
+                #Check that all data have same number of nodes
+                if(length(unique(unlist(lapply(datalist,ncol))))!=1)
+                {stop("bootSemNeT(): All datasets must have the same number of columns")}
+                
+                #Error on method
+                if(method != "TMFG")
+                {stop(paste("bootSemNeT(): Node-wise bootstrap is not supported with the", method, "method", sep = " "))}
+                
+                #Randomly sample nodes
+                rand <- sample(full, (full*prop), replace=FALSE)
+                
+                #Input into data list
+                new[[count]] <- get(name[i], envir = environment())[,rand]
+            }else if(type == "case")
+            {
+                #Error on method = "TMFG"
+                if(method == "TMFG")
+                {stop("bootSemNeT(): Case-wise bootstrap is not supported with the TMFG method")}
+                
+                #Randomly sample nodes
+                rand <- sample(nrow(get(name[i], envir = environment())),
+                               nrow(get(name[i], envir = environment())),
+                               replace=TRUE)
+                
+                #Input into data list
+                new[[count]] <- get(name[i], envir = environment())[rand,]
+            }
             
             if(count == iter)
             {break}
@@ -475,53 +770,74 @@ partbootShiny <- function (dat, percent = .50, sim, weighted = FALSE,
         assign(paste("dl.",name[i],sep=""),new)
     }
     
+    #Let user know data generation is finished
+    message("done\n")
+    
     ############################
     #### COMPUTE SIMILARITY ####
     ############################
     
-    #Let user know simliairity is being computed
-    message(paste("Computing similarity measures (",percent*100,"%)...\n",sep=""), appendLF = FALSE)
-    
-    #Parallel processing
-    cl <- parallel::makeCluster(cores)
-    
-    #Export datalist
-    parallel::clusterExport(cl = cl, varlist = paste("dl.",name,sep=""), envir = environment())
-    
-    for(i in 1:length(name))
+    if(method == "TMFG")
     {
-        #Compute similarity
-        newSim <- pbapply::pblapply(X = get(paste("dl.",name[i],sep=""), envir = environment()),
-                                    cl = cl,
-                                    FUN = similarity,
-                                    method = sim)
+        #Let user know simliairity is being computed
+        message("Computing similarity measures...\n", appendLF = FALSE)
         
-        #Insert similarity list
-        assign(paste("sim.",name[i],sep=""),newSim)
+        #Parallel processing
+        cl <- parallel::makeCluster(cores)
+        
+        #Export datalist
+        parallel::clusterExport(cl = cl, varlist = paste("dl.",name,sep=""), envir = environment())
+        
+        for(i in 1:length(name))
+        {
+            #Compute similarity
+            newSim <- pbapply::pblapply(X = get(paste("dl.",name[i],sep=""), envir = environment()),
+                                        cl = cl,
+                                        FUN = similarity,
+                                        method = sim)
+            
+            #Insert similarity list
+            assign(paste("sim.",name[i],sep=""),newSim)
+        }
+        
+        #Stop Cluster
+        parallel::stopCluster(cl)
+    }else{
+        for(i in 1:length(name))
+        {
+            #Insert similarity list
+            assign(paste("sim.",name[i],sep=""),
+                   get(paste("dl.",name[i],sep=""), envir = environment()))
+        }
     }
-    
-    #Stop Cluster
-    parallel::stopCluster(cl)
     
     ############################
     #### CONSTRUCT NETWORKS ####
     ############################
     
+    #Assign network function
+    NET.FUNC <- switch(method,
+                       TMFG = NetworkToolbox::TMFG,
+                       CN = CN,
+                       NRW = NRW,
+                       PF = PF)
+    
     #Let user know networks are being computed
-    message(paste("Estimating networks (",percent*100,"%)...\n",sep=""), appendLF = FALSE)
+    message("Estimating networks...\n", appendLF = FALSE)
     
     #Parallel processing
     cl <- parallel::makeCluster(cores)
     
     #Export datalist
-    parallel::clusterExport(cl = cl, varlist = paste("sim.",name,sep=""), envir = environment())
+    parallel::clusterExport(cl = cl, varlist = c(paste("sim.",name,sep=""), "NET.FUNC"),
+                            envir = environment())
     
     for(i in 1:length(name))
     {
         #Compute networks
         newNet <- pbapply::pblapply(X = get(paste("sim.",name[i],sep=""), envir = environment()),
                                     cl = cl,
-                                    FUN = NetworkToolbox::TMFG)
+                                    FUN = NET.FUNC)
         
         #Insert network list
         assign(paste("net.",name[i],sep=""),newNet)
@@ -537,8 +853,14 @@ partbootShiny <- function (dat, percent = .50, sim, weighted = FALSE,
         Semnet <- list()
         
         #Loop through networks
-        for(j in 1:iter)
-        {Semnet[[j]] <- get(paste("net.",name[i],sep=""), envir = environment())[[j]]$A}
+        if(method == "TMFG")
+        {
+            for(j in 1:iter)
+            {Semnet[[j]] <- get(paste("net.",name[i],sep=""), envir = environment())[[j]]$A}
+        }else{
+            for(j in 1:iter)
+            {Semnet[[j]] <- get(paste("net.",name[i],sep=""), envir = environment())[[j]]}
+        }
         
         #Insert semantic network list
         assign(paste("Semnet.",name[i],sep=""),Semnet)
@@ -549,7 +871,7 @@ partbootShiny <- function (dat, percent = .50, sim, weighted = FALSE,
     ##############################
     
     #Let user know networks are being computed
-    message(paste("Computing statistics (",percent*100,"%)...\n",sep=""), appendLF = FALSE)
+    message("Computing statistics...\n", appendLF = FALSE)
     
     #Parallel processing
     cl <- parallel::makeCluster(cores)
@@ -562,7 +884,8 @@ partbootShiny <- function (dat, percent = .50, sim, weighted = FALSE,
         #Compute network measures
         netMeas <- pbapply::pbsapply(X = get(paste("Semnet.",name[i],sep=""), envir = environment()),
                                      cl = cl,
-                                     FUN = semnetmeas)
+                                     FUN = semnetmeas
+        )
         
         #Insert network measures list
         assign(paste("meas.",name[i],sep=""),netMeas)
@@ -575,8 +898,8 @@ partbootShiny <- function (dat, percent = .50, sim, weighted = FALSE,
     summ.table <- function (data, n)
     {
         stats <- list()
-        stats$mean <- rowMeans(data)
-        stats$stdev <- apply(data,1,sd)
+        stats$mean <- rowMeans(data, na.rm = TRUE)
+        stats$stdev <- apply(data, 1, sd, na.rm = TRUE)
         stats$se <- stats$stdev/sqrt(n)
         stats$lower <- stats$mean - (1.96 * stats$se)
         stats$upper <- stats$mean + (1.96 * stats$se)
@@ -594,20 +917,24 @@ partbootShiny <- function (dat, percent = .50, sim, weighted = FALSE,
         bootlist[[paste(name[i],"Summ",sep="")]] <- summ.table(get(paste("meas.",name[i],sep=""), envir = environment()), iter)
     }
     
-    #Insert percent remaining and iterations
-    bootlist$percent <- percent
+    #Insert proportion remaining and iterations
+    if(type == "node")
+    {bootlist$prop <- prop}
+    
     bootlist$iter <- iter
     
-    class(bootlist) <- "partboot"
+    bootlist$type <- type
+    
+    class(bootlist) <- "bootSemNeT"
     
     return(bootlist)
 }
 #----
 
-#' Statistical tests for \code{\link[SemNeT]{partboot}}
+#' Statistical tests for \code{\link[SemNeT]{bootSemNeT}} in Shiny
 #' 
 #' @description Computes statistical tests for partial bootstrapped
-#' networks from \code{\link[SemNeT]{partboot}}. Automatically
+#' networks from \code{\link[SemNeT]{bootSemNeT}}. Automatically
 #' computes \emph{t}-tests (\code{\link{t.test}}) or ANOVA
 #' (\code{\link{aov}}) including Tukey's HSD for pairwise comparisons
 #' (\code{\link{TukeyHSD}})
@@ -622,17 +949,17 @@ partbootShiny <- function (dat, percent = .50, sim, weighted = FALSE,
 #' A data frame specifying the groups to be input into the formula.
 #' The column names should be the variable names of interest. The
 #' groups should be in the same order as the groups input into
-#' \code{\link[SemNeT]{partboot}}
+#' \code{\link[SemNeT]{bootSemNeT}}
 #' 
-#' @param ... Object(s) from \code{\link[SemNeT]{partboot}}
+#' @param input Object(s) from \code{\link[SemNeT]{bootSemNeT}}
 #' 
 #' @return Returns a list containing the objects:
 #' 
-#' \item{ASPL}{Test statistics for each percentage of nodes remaining for ASPL}
+#' \item{ASPL}{Test statistics for each proportion of nodes remaining for ASPL}
 #' 
-#' \item{CC}{Test statistics for each percentage of nodes remaining for CC}
+#' \item{CC}{Test statistics for each proportion of nodes remaining for CC}
 #' 
-#' \item{Q}{Test statistics for each percentage of nodes remaining for Q}
+#' \item{Q}{Test statistics for each proportion of nodes remaining for Q}
 #' 
 #' If two groups:
 #' 
@@ -653,9 +980,9 @@ partbootShiny <- function (dat, percent = .50, sim, weighted = FALSE,
 #' \item{Direction}{Direction of the effect. The argument \code{groups} will
 #' specify specifically which group is higher or lower on the measure. If no
 #' groups are input, then \code{"d"} and \code{"p"} are used to represent
-#' \code{data} and \code{paired} samples from \code{\link[SemNeT]{partboot}}, respectively}
+#' \code{data} and \code{paired} samples from \code{\link[SemNeT]{bootSemNeT}}, respectively}
 #' 
-#' Row names refer to the percentage of nodes remaining in bootstrapped networks
+#' Row names refer to the proportion of nodes remaining in bootstrapped networks
 #' 
 #' If three or more groups:
 #' 
@@ -672,17 +999,14 @@ partbootShiny <- function (dat, percent = .50, sim, weighted = FALSE,
 #' 
 #' @noRd
 #Test: Partial Bootstrapped Network Statistics----
-#Updated 20.03.2020
-partboot.testShiny <- function (input, formula = NULL, groups = NULL)
+# Updated 05.04.2020
+test.bootSemNeTShiny <- function (input, formula = NULL, groups = NULL)
 {
-    #Obtain ... in a list
-    #input <- list(...)
-    
     #Names of groups
     name <- unique(gsub("Summ","",gsub("Meas","",names(input[[1]]))))
     
-    #Remove percent and iter
-    name <- na.omit(gsub("iter",NA,gsub("percent",NA,name)))
+    #Remove proportion and iter
+    name <- na.omit(gsub("type",NA,gsub("iter",NA,gsub("prop",NA,name))))
     attr(name, "na.action") <- NULL
     
     #Length of groups
@@ -694,7 +1018,7 @@ partboot.testShiny <- function (input, formula = NULL, groups = NULL)
     #Number of input
     if(length(input)==1)
     {
-        res <- partboot.one.testShiny(input[[1]])
+        res <- boot.one.testShiny(input[[1]])
     }else{
         
         if(len == 2)
@@ -713,7 +1037,7 @@ partboot.testShiny <- function (input, formula = NULL, groups = NULL)
             for(i in 1:length(input))
             {
                 #Compute tests
-                test <- partboot.one.testShiny(input[[i]])
+                test <- boot.one.testShiny(input[[i]])
                 
                 #ASPL
                 aspl[[i]] <- test$ASPL
@@ -767,11 +1091,11 @@ partboot.testShiny <- function (input, formula = NULL, groups = NULL)
             #Loop through input
             for(i in 1:length(input))
             {
-                #Identify percent of nodes remaining
-                perc <- input[[i]]$percent
+                #Identify proportion of nodes remaining
+                perc <- input[[i]]$prop
                 
                 #Compute tests
-                test <- partboot.one.testShiny(input[[i]], formula = formula, groups = groups)
+                test <- boot.one.testShiny(input[[i]], formula = formula, groups = groups)
                 
                 if(is.null(formula))
                 {
@@ -794,16 +1118,16 @@ partboot.testShiny <- function (input, formula = NULL, groups = NULL)
                     hsd$Q[[q.row[i]]] <- test$Q$HSD
                 }else{
                     #ASPL
-                    aspl[[paste(perc*100,"%",sep="")]]$ANOVA <- test$ASPL$ANOVA[[1]]
-                    aspl[[paste(perc*100,"%",sep="")]]$HSD <- test$ASPL$HSD[[1]]
+                    aspl[[sprintf("%1.2f", perc)]]$ANOVA <- test$ASPL$ANOVA[[1]]
+                    aspl[[sprintf("%1.2f", perc)]]$HSD <- test$ASPL$HSD[[1]]
                     
                     #CC
-                    cc[[paste(perc*100,"%",sep="")]] <- test$CC$ANOVA[[1]]
-                    cc[[paste(perc*100,"%",sep="")]] <- test$CC$HSD[[1]]
+                    cc[[sprintf("%1.2f", perc)]] <- test$CC$ANOVA[[1]]
+                    cc[[sprintf("%1.2f", perc)]] <- test$CC$HSD[[1]]
                     
                     #Q
-                    q[[paste(perc*100,"%",sep="")]] <- test$Q$ANOVA[[1]]
-                    q[[paste(perc*100,"%",sep="")]] <- test$Q$HSD[[1]]
+                    q[[sprintf("%1.2f", perc)]] <- test$Q$ANOVA[[1]]
+                    q[[sprintf("%1.2f", perc)]] <- test$Q$HSD[[1]]
                     
                     hsd <- NULL
                 }
@@ -839,15 +1163,15 @@ partboot.testShiny <- function (input, formula = NULL, groups = NULL)
 }
 #----
 
-#' Subroutine function for \code{\link[SemNeT]{partboot.test}} for Shiny
+#' Sub-routine function for \code{\link[SemNeT]{test.bootSemNeT}} in Shiny
 #' 
 #' @description Computes statistical tests for partial bootstrapped
-#' networks from \code{\link[SemNeT]{partboot}}. Automatically
+#' networks from \code{\link[SemNeT]{bootSemNeT}}. Automatically
 #' computes \emph{t}-tests (\code{\link{t.test}}) or ANOVA
 #' (\code{\link{aov}}) including Tukey's HSD for pairwise comparisons
 #' (\code{\link{TukeyHSD}})
 #' 
-#' @param partboot.obj Object from \code{\link[SemNeT]{partboot}}
+#' @param bootSemNeT.obj Object from \code{\link[SemNeT]{bootSemNeT}}
 #' 
 #' @param formula Character.
 #' A formula for specifying an ANOVA structure. The formula should
@@ -863,11 +1187,11 @@ partboot.testShiny <- function (input, formula = NULL, groups = NULL)
 #' 
 #' @return Returns a list containing the objects:
 #' 
-#' \item{ASPL}{Test statistics for each percentage of nodes remaining for ASPL}
+#' \item{ASPL}{Test statistics for each proportion of nodes remaining for ASPL}
 #' 
-#' \item{CC}{Test statistics for each percentage of nodes remaining for CC}
+#' \item{CC}{Test statistics for each proportion of nodes remaining for CC}
 #' 
-#' \item{Q}{Test statistics for each percentage of nodes remaining for Q}
+#' \item{Q}{Test statistics for each proportion of nodes remaining for Q}
 #' 
 #' If two groups:
 #' 
@@ -890,7 +1214,7 @@ partboot.testShiny <- function (input, formula = NULL, groups = NULL)
 #' groups are input, then \code{"d"} and \code{"p"} are used to represent
 #' \code{data} and \code{paired} samples from \code{\link[SemNeT]{partboot}}, respectively}
 #' 
-#' Row names refer to the percentage of nodes remaining in bootstrapped networks
+#' Row names refer to the proportion of nodes remaining in bootstrapped networks
 #' 
 #' If three or more groups:
 #' 
@@ -906,14 +1230,10 @@ partboot.testShiny <- function (input, formula = NULL, groups = NULL)
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
 #' 
 #' @noRd
-#Test: Partial Bootstrapped Network Statistics----
-#Updated 20.03.2020
-partboot.one.testShiny <- function (partboot.obj, formula = NULL, groups = NULL)
+# Test: Bootstrapped Network Statistics----
+# Updated 05.04.2020
+boot.one.testShiny <- function (bootSemNeT.obj, formula = NULL, groups = NULL)
 {
-    #Check for 'partboot' object
-    #if(class(partboot.obj) != "partboot")
-    #{stop("Object input into 'partboot.obj' is not a 'partboot' object")}
-    
     #Check for data if formula is not NULL
     if(!is.null(formula))
     {
@@ -922,10 +1242,10 @@ partboot.one.testShiny <- function (partboot.obj, formula = NULL, groups = NULL)
     }
     
     #Get names of networks
-    name <- unique(gsub("Summ","",gsub("Meas","",names(partboot.obj))))
+    name <- unique(gsub("Summ","",gsub("Meas","",names(bootSemNeT.obj))))
     
-    #Remove percent and iter
-    name <- na.omit(gsub("iter",NA,gsub("percent",NA,name)))
+    #Remove proportion and iter
+    name <- na.omit(gsub("type",NA,gsub("iter",NA,gsub("prop",NA,name))))
     attr(name, "na.action") <- NULL
     
     #Number of input
@@ -935,11 +1255,14 @@ partboot.one.testShiny <- function (partboot.obj, formula = NULL, groups = NULL)
     if(len < 2)
     {stop("Single samples cannot be tested. Use 'randnet.test' for single samples")}
     
-    #Identify percent of nodes remaining
-    perc <- partboot.obj$percent
+    #Identify prop of nodes remaining
+    perc <- bootSemNeT.obj$prop
+    
+    if(is.null(perc))
+    {perc <- 1.00}
     
     #Identify iterations
-    iter <- partboot.obj$iter
+    iter <- bootSemNeT.obj$iter
     
     ############################
     #### SIGNIFICANCE TESTS ####
@@ -964,29 +1287,29 @@ partboot.one.testShiny <- function (partboot.obj, formula = NULL, groups = NULL)
         
         ##ASPL Tests
         aspl <- matrix(NA, nrow = 1, ncol = 8)
-        row.names(aspl) <- paste(perc*100,"%",sep="")
+        row.names(aspl) <- sprintf("%1.2f", perc)
         colnames(aspl) <- c("t-statistic", "df", "p-value", "d", "Difference",
                             "CI95.lower", "CI95.upper","Direction")
         #ASPL
-        one.aspl <- partboot.obj[[paste(name[1],"Meas",sep="")]]["ASPL",]
-        two.aspl <- partboot.obj[[paste(name[2],"Meas",sep="")]]["ASPL",]
+        one.aspl <- bootSemNeT.obj[[paste(name[1],"Meas",sep="")]]["ASPL",]
+        two.aspl <- bootSemNeT.obj[[paste(name[2],"Meas",sep="")]]["ASPL",]
         
         #t-test
         test <- t.test(one.aspl, two.aspl, var.equal = TRUE)
         
         #Input results into table
-        aspl[paste(perc*100,"%",sep=""),1] <- round(as.numeric(test$statistic),3)
-        aspl[paste(perc*100,"%",sep=""),2] <- round(as.numeric(test$parameter),3)
-        aspl[paste(perc*100,"%",sep=""),3] <- round(as.numeric(test$p.value),3)
-        aspl[paste(perc*100,"%",sep=""),4] <- round(as.numeric(d(one.aspl,two.aspl)),3)
-        aspl[paste(perc*100,"%",sep=""),5] <- round(as.numeric(mean(one.aspl)-mean(two.aspl)),3)
-        aspl[paste(perc*100,"%",sep=""),6] <- round(as.numeric(test$conf.int[1]),3)
-        aspl[paste(perc*100,"%",sep=""),7] <- round(as.numeric(test$conf.int[2]),3)
+        aspl[sprintf("%1.2f", perc),1] <- round(as.numeric(test$statistic),3)
+        aspl[sprintf("%1.2f", perc),2] <- round(as.numeric(test$parameter),3)
+        aspl[sprintf("%1.2f", perc),3] <- round(as.numeric(test$p.value),3)
+        aspl[sprintf("%1.2f", perc),4] <- round(as.numeric(d(one.aspl,two.aspl)),3)
+        aspl[sprintf("%1.2f", perc),5] <- round(as.numeric(mean(one.aspl)-mean(two.aspl)),3)
+        aspl[sprintf("%1.2f", perc),6] <- round(as.numeric(test$conf.int[1]),3)
+        aspl[sprintf("%1.2f", perc),7] <- round(as.numeric(test$conf.int[2]),3)
         
         if(round(as.numeric(test$p.value),3) > .05)
-        {aspl[paste(perc*100,"%",sep=""),8] <- "n.s."
+        {aspl[sprintf("%1.2f", perc),8] <- "n.s."
         }else{
-            aspl[paste(perc*100,"%",sep=""),8] <- ifelse(sign(test$statistic)==1,
+            aspl[sprintf("%1.2f", perc),8] <- ifelse(sign(test$statistic)==1,
                                                          paste(name[1],">",name[2],sep=" "),
                                                          paste(name[2],">",name[1],sep=" ")
             )
@@ -994,29 +1317,29 @@ partboot.one.testShiny <- function (partboot.obj, formula = NULL, groups = NULL)
         
         ##CC Tests
         cc <- matrix(NA, nrow = 1, ncol = 8)
-        row.names(cc) <- paste(perc*100,"%",sep="")
+        row.names(cc) <- sprintf("%1.2f", perc)
         colnames(cc) <- c("t-statistic", "df", "p-value", "d", "Difference",
                           "CI95.lower", "CI95.upper","Direction")
         #CC
-        one.cc <- partboot.obj[[paste(name[1],"Meas",sep="")]]["CC",]
-        two.cc <- partboot.obj[[paste(name[2],"Meas",sep="")]]["CC",]
+        one.cc <- bootSemNeT.obj[[paste(name[1],"Meas",sep="")]]["CC",]
+        two.cc <- bootSemNeT.obj[[paste(name[2],"Meas",sep="")]]["CC",]
         
         #t-test
         test <- t.test(one.cc, two.cc, var.equal = TRUE)
         
         #Input results into table
-        cc[paste(perc*100,"%",sep=""),1] <- round(as.numeric(test$statistic),3)
-        cc[paste(perc*100,"%",sep=""),2] <- round(as.numeric(test$parameter),3)
-        cc[paste(perc*100,"%",sep=""),3] <- round(as.numeric(test$p.value),3)
-        cc[paste(perc*100,"%",sep=""),4] <- round(as.numeric(d(one.cc,two.cc)),3)
-        cc[paste(perc*100,"%",sep=""),5] <- round(as.numeric(mean(one.cc)-mean(two.cc)),3)
-        cc[paste(perc*100,"%",sep=""),6] <- round(as.numeric(test$conf.int[1]),3)
-        cc[paste(perc*100,"%",sep=""),7] <- round(as.numeric(test$conf.int[2]),3)
+        cc[sprintf("%1.2f", perc),1] <- round(as.numeric(test$statistic),3)
+        cc[sprintf("%1.2f", perc),2] <- round(as.numeric(test$parameter),3)
+        cc[sprintf("%1.2f", perc),3] <- round(as.numeric(test$p.value),3)
+        cc[sprintf("%1.2f", perc),4] <- round(as.numeric(d(one.cc,two.cc)),3)
+        cc[sprintf("%1.2f", perc),5] <- round(as.numeric(mean(one.cc)-mean(two.cc)),3)
+        cc[sprintf("%1.2f", perc),6] <- round(as.numeric(test$conf.int[1]),3)
+        cc[sprintf("%1.2f", perc),7] <- round(as.numeric(test$conf.int[2]),3)
         
         if(round(as.numeric(test$p.value),3) > .05)
-        {cc[paste(perc*100,"%",sep=""),8] <- "n.s."
+        {cc[sprintf("%1.2f", perc),8] <- "n.s."
         }else{
-            cc[paste(perc*100,"%",sep=""),8] <- ifelse(sign(test$statistic)==1,
+            cc[sprintf("%1.2f", perc),8] <- ifelse(sign(test$statistic)==1,
                                                        paste(name[1],">",name[2],sep=" "),
                                                        paste(name[2],">",name[1],sep=" ")
             )
@@ -1024,29 +1347,29 @@ partboot.one.testShiny <- function (partboot.obj, formula = NULL, groups = NULL)
         
         ##Q Tests
         q <- matrix(NA, nrow = 1, ncol = 8)
-        row.names(q) <- paste(perc*100,"%",sep="")
+        row.names(q) <- sprintf("%1.2f", perc)
         colnames(q) <- c("t-statistic", "df", "p-value", "d", "Difference",
                          "CI95.lower", "CI95.upper","Direction")
         #Q
-        one.q <- partboot.obj[[paste(name[1],"Meas",sep="")]]["Q",]
-        two.q <- partboot.obj[[paste(name[2],"Meas",sep="")]]["Q",]
+        one.q <- bootSemNeT.obj[[paste(name[1],"Meas",sep="")]]["Q",]
+        two.q <- bootSemNeT.obj[[paste(name[2],"Meas",sep="")]]["Q",]
         
         #t-test
         test <- t.test(one.q, two.q, var.equal = TRUE)
         
         #Input results into table
-        q[paste(perc*100,"%",sep=""),1] <- round(as.numeric(test$statistic),3)
-        q[paste(perc*100,"%",sep=""),2] <- round(as.numeric(test$parameter),3)
-        q[paste(perc*100,"%",sep=""),3] <- round(as.numeric(test$p.value),3)
-        q[paste(perc*100,"%",sep=""),4] <- round(as.numeric(d(one.q,two.q)),3)
-        q[paste(perc*100,"%",sep=""),5] <- round(as.numeric(mean(one.q)-mean(two.q)),3)
-        q[paste(perc*100,"%",sep=""),6] <- round(as.numeric(test$conf.int[1]),3)
-        q[paste(perc*100,"%",sep=""),7] <- round(as.numeric(test$conf.int[2]),3)
+        q[sprintf("%1.2f", perc),1] <- round(as.numeric(test$statistic),3)
+        q[sprintf("%1.2f", perc),2] <- round(as.numeric(test$parameter),3)
+        q[sprintf("%1.2f", perc),3] <- round(as.numeric(test$p.value),3)
+        q[sprintf("%1.2f", perc),4] <- round(as.numeric(d(one.q,two.q)),3)
+        q[sprintf("%1.2f", perc),5] <- round(as.numeric(mean(one.q)-mean(two.q)),3)
+        q[sprintf("%1.2f", perc),6] <- round(as.numeric(test$conf.int[1]),3)
+        q[sprintf("%1.2f", perc),7] <- round(as.numeric(test$conf.int[2]),3)
         
         if(round(as.numeric(test$p.value),3) > .05)
-        {q[paste(perc*100,"%",sep=""),8] <- "n.s."
+        {q[sprintf("%1.2f", perc),8] <- "n.s."
         }else{
-            q[paste(perc*100,"%",sep=""),8] <- ifelse(sign(test$statistic)==1,
+            q[sprintf("%1.2f", perc),8] <- ifelse(sign(test$statistic)==1,
                                                       paste(name[1],">",name[2],sep=" "),
                                                       paste(name[2],">",name[1],sep=" ")
             )
@@ -1072,7 +1395,7 @@ partboot.one.testShiny <- function (partboot.obj, formula = NULL, groups = NULL)
         if(is.null(formula))
         {
             aspl <- matrix(NA, nrow = 1, ncol = 5)
-            row.names(aspl) <- paste(perc*100,"%",sep="")
+            row.names(aspl) <- sprintf("%1.2f", perc)
             colnames(aspl) <- c("F-statistic", "group.df", "residual.df", "p-value", "p.eta.sq")
         }else{
             aspl <- list()
@@ -1086,7 +1409,7 @@ partboot.one.testShiny <- function (partboot.obj, formula = NULL, groups = NULL)
         for(i in 1:len)
         {
             #Insert ASPL values
-            new.aspl <- partboot.obj[[paste(name[i],"Meas",sep="")]]["ASPL",]
+            new.aspl <- bootSemNeT.obj[[paste(name[i],"Meas",sep="")]]["ASPL",]
             
             #Initialize matrix
             mat <- cbind(rep(name[i], length(new.aspl)),new.aspl)
@@ -1118,19 +1441,19 @@ partboot.one.testShiny <- function (partboot.obj, formula = NULL, groups = NULL)
         if(!is.null(formula))
         {
             test <- aov(as.formula(gsub("y", "Measure", formula)), data = aov.obj)
-            aspl[[paste(perc*100,"%",sep="")]] <- summary(test)[[1]]
-            hsd[[paste(perc*100,"%",sep="")]] <- TukeyHSD(test)
+            aspl[[sprintf("%1.2f", perc)]] <- summary(test)[[1]]
+            hsd[[sprintf("%1.2f", perc)]] <- TukeyHSD(test)
         }else{
             test <- aov(Measure ~ Group, data = aov.obj)
             
             test.summ <- summary(test)[[1]]
             
             #Input results into table
-            aspl[paste(perc*100,"%",sep=""),"F-statistic"] <- round(test.summ$`F value`[1],3)
-            aspl[paste(perc*100,"%",sep=""),"group.df"] <- test.summ$Df[1]
-            aspl[paste(perc*100,"%",sep=""),"residual.df"] <- test.summ$Df[2]
-            aspl[paste(perc*100,"%",sep=""),"p-value"] <- test.summ$`Pr(>F)`[1]
-            aspl[paste(perc*100,"%",sep=""),"p.eta.sq"] <- partial.eta(test.summ$`Sum Sq`[1],sum(test.summ$`Sum Sq`))
+            aspl[sprintf("%1.2f", perc),"F-statistic"] <- round(test.summ$`F value`[1],3)
+            aspl[sprintf("%1.2f", perc),"group.df"] <- test.summ$Df[1]
+            aspl[sprintf("%1.2f", perc),"residual.df"] <- test.summ$Df[2]
+            aspl[sprintf("%1.2f", perc),"p-value"] <- test.summ$`Pr(>F)`[1]
+            aspl[sprintf("%1.2f", perc),"p.eta.sq"] <- partial.eta(test.summ$`Sum Sq`[1],sum(test.summ$`Sum Sq`))
             
             #Tukey's HSD
             if(test.summ$`Pr(>F)`[1] < .05)
@@ -1147,7 +1470,7 @@ partboot.one.testShiny <- function (partboot.obj, formula = NULL, groups = NULL)
         if(is.null(formula))
         {
             cc <- matrix(NA, nrow = 1, ncol = 5)
-            row.names(cc) <- paste(perc*100,"%",sep="")
+            row.names(cc) <- sprintf("%1.2f", perc)
             colnames(cc) <- c("F-statistic", "group.df", "residual.df", "p-value", "p.eta.sq")
         }else{
             cc <- list()
@@ -1161,7 +1484,7 @@ partboot.one.testShiny <- function (partboot.obj, formula = NULL, groups = NULL)
         for(i in 1:len)
         {
             #Insert CC values
-            new.cc <- partboot.obj[[paste(name[i],"Meas",sep="")]]["CC",]
+            new.cc <- bootSemNeT.obj[[paste(name[i],"Meas",sep="")]]["CC",]
             
             #Initialize matrix
             mat <- cbind(rep(name[i], length(new.cc)),new.cc)
@@ -1193,19 +1516,19 @@ partboot.one.testShiny <- function (partboot.obj, formula = NULL, groups = NULL)
         if(!is.null(formula))
         {
             test <- aov(as.formula(gsub("y", "Measure", formula)), data = aov.obj)
-            cc[[paste(perc*100,"%",sep="")]] <- summary(test)[[1]]
-            hsd[[paste(perc*100,"%",sep="")]] <- TukeyHSD(test)
+            cc[[sprintf("%1.2f", perc)]] <- summary(test)[[1]]
+            hsd[[sprintf("%1.2f", perc)]] <- TukeyHSD(test)
         }else{
             test <- aov(Measure ~ Group, data = aov.obj)
             
             test.summ <- summary(test)[[1]]
             
             #Input results into table
-            cc[paste(perc*100,"%",sep=""),"F-statistic"] <- round(test.summ$`F value`[1],3)
-            cc[paste(perc*100,"%",sep=""),"group.df"] <- test.summ$Df[1]
-            cc[paste(perc*100,"%",sep=""),"residual.df"] <- test.summ$Df[2]
-            cc[paste(perc*100,"%",sep=""),"p-value"] <- test.summ$`Pr(>F)`[1]
-            cc[paste(perc*100,"%",sep=""),"p.eta.sq"] <- partial.eta(test.summ$`Sum Sq`[1],sum(test.summ$`Sum Sq`))
+            cc[sprintf("%1.2f", perc),"F-statistic"] <- round(test.summ$`F value`[1],3)
+            cc[sprintf("%1.2f", perc),"group.df"] <- test.summ$Df[1]
+            cc[sprintf("%1.2f", perc),"residual.df"] <- test.summ$Df[2]
+            cc[sprintf("%1.2f", perc),"p-value"] <- test.summ$`Pr(>F)`[1]
+            cc[sprintf("%1.2f", perc),"p.eta.sq"] <- partial.eta(test.summ$`Sum Sq`[1],sum(test.summ$`Sum Sq`))
             
             #Tukey's HSD
             if(test.summ$`Pr(>F)`[1] < .05)
@@ -1222,7 +1545,7 @@ partboot.one.testShiny <- function (partboot.obj, formula = NULL, groups = NULL)
         if(is.null(formula))
         {
             q <- matrix(NA, nrow = 1, ncol = 5)
-            row.names(q) <- paste(perc*100,"%",sep="")
+            row.names(q) <- sprintf("%1.2f", perc)
             colnames(q) <- c("F-statistic", "group.df", "residual.df", "p-value", "p.eta.sq")
         }else{
             q <- list()
@@ -1236,7 +1559,7 @@ partboot.one.testShiny <- function (partboot.obj, formula = NULL, groups = NULL)
         for(i in 1:len)
         {
             #Insert Q values
-            new.q <- partboot.obj[[paste(name[i],"Meas",sep="")]]["Q",]
+            new.q <- bootSemNeT.obj[[paste(name[i],"Meas",sep="")]]["Q",]
             
             #Initialize matrix
             mat <- cbind(rep(name[i], length(new.q)),new.q)
@@ -1268,19 +1591,19 @@ partboot.one.testShiny <- function (partboot.obj, formula = NULL, groups = NULL)
         if(!is.null(formula))
         {
             test <- aov(as.formula(gsub("y", "Measure", formula)), data = aov.obj)
-            q[[paste(perc*100,"%",sep="")]] <- summary(test)[[1]]
-            hsd[[paste(perc*100,"%",sep="")]] <- TukeyHSD(test)
+            q[[sprintf("%1.2f", perc)]] <- summary(test)[[1]]
+            hsd[[sprintf("%1.2f", perc)]] <- TukeyHSD(test)
         }else{
             test <- aov(Measure ~ Group, data = aov.obj)
             
             test.summ <- summary(test)[[1]]
             
             #Input results into table
-            q[paste(perc*100,"%",sep=""),"F-statistic"] <- round(test.summ$`F value`[1],3)
-            q[paste(perc*100,"%",sep=""),"group.df"] <- test.summ$Df[1]
-            q[paste(perc*100,"%",sep=""),"residual.df"] <- test.summ$Df[2]
-            q[paste(perc*100,"%",sep=""),"p-value"] <- test.summ$`Pr(>F)`[1]
-            q[paste(perc*100,"%",sep=""),"p.eta.sq"] <- partial.eta(test.summ$`Sum Sq`[1],sum(test.summ$`Sum Sq`))
+            q[sprintf("%1.2f", perc),"F-statistic"] <- round(test.summ$`F value`[1],3)
+            q[sprintf("%1.2f", perc),"group.df"] <- test.summ$Df[1]
+            q[sprintf("%1.2f", perc),"residual.df"] <- test.summ$Df[2]
+            q[sprintf("%1.2f", perc),"p-value"] <- test.summ$`Pr(>F)`[1]
+            q[sprintf("%1.2f", perc),"p.eta.sq"] <- partial.eta(test.summ$`Sum Sq`[1],sum(test.summ$`Sum Sq`))
             
             #Tukey's HSD
             if(test.summ$`Pr(>F)`[1] < .05)
@@ -1300,38 +1623,54 @@ partboot.one.testShiny <- function (partboot.obj, formula = NULL, groups = NULL)
         tests$Q <- Q
     }
     
+    # Band-aid fix for case bootstrap (instead of node)
+    if(bootSemNeT.obj$type == "case")
+    {
+        tests <- t(sapply(tests,as.data.frame))
+        
+        tests[,-which(colnames(tests) == "Direction")] <- apply(tests[,-which(colnames(tests) == "Direction")],2,as.numeric)
+    }
+    
     return(tests)
 }
 #----
 
-#' Plot for partboot
+#' Plot for \link[SemNeT]{bootSemNeT} in Shiny
 #' 
-#' @description Bootstraps (without replacement) the nodes in the network and computes global network characteristics
+#' @description Plots output from \link[SemNeT]{bootSemNeT}
 #' 
-#' @param input List.
-#' Object(s) from \code{\link[SemNeT]{partboot}}
+#' @param input Object(s) from \code{\link[SemNeT]{bootSemNeT}}
 #' 
 #' @param groups Character.
 #' Labels for groups in the order they were entered
-#' in \code{\link[SemNeT]{partboot}}
+#' in \code{\link[SemNeT]{bootSemNeT}}
 #'
 #' @param measures Character.
 #' Measures to be plotted
 #' 
 #' @return Returns plots for the specified measures
 #' 
+#' @examples
+#' # Simulate Dataset
+#' one <- sim.fluency(20)
+#' \donttest{
+#' # Run partial bootstrap networks
+#' one.result <- bootSemNeT(one, prop = .50, iter = 1000,
+#' sim = "cosine", cores = 2, type = "node", method = "TFMG")
+#' }
+#' # Plot
+#' plot(one.result, groups = c("One"))
+#' 
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
 #' 
 #' @noRd
-#Plot: Partial Bootstrapped Semantic Network Analysis----
-partbootplotShiny <- function (input, groups = NULL, measures = c("ASPL","CC","Q"))
+#Plot: Bootstrapped Semantic Network Analysis----
+# Updated 05.04.2020
+plotbootSemNeTShiny <- function (input, groups = NULL, measures = c("ASPL","CC","Q"))
 {
-    #Obtain ... in a list
-    #input <- list(...)
-    
     #Check for 'partboot' object
-    if(all(unlist(lapply(input, class)) != "partboot"))
-    {stop("Object input into 'partboot.obj' is not a 'partboot' object")}
+    if(all(unlist(lapply(input, class)) != "bootSemNeT"))
+    {stop("Object input into 'bootSemNeT.obj' is not a 'bootSemNeT' object")}
     
     #Number of input
     len <- length(input)
@@ -1339,8 +1678,8 @@ partbootplotShiny <- function (input, groups = NULL, measures = c("ASPL","CC","Q
     #Get names of networks
     name <- unique(gsub("Summ","",gsub("Meas","",names(input[[1]]))))
     
-    #Remove percent and iter
-    name <- na.omit(gsub("iter",NA,gsub("percent",NA,name)))
+    #Remove proportion and iter
+    name <- na.omit(gsub("type",NA,gsub("iter",NA,gsub("prop",NA,name))))
     attr(name, "na.action") <- NULL
     
     #Missing arguments

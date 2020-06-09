@@ -11,7 +11,7 @@ two.result (list, length = 6)
 data(two.result)
 }
 \description{
-A result of \code{\link[SemNeT]{partboot}} from two simulated datasets
+A result of \code{\link[SemNeT]{bootSemNeT}} from two simulated datasets
 }
 \examples{
 data("two.result")

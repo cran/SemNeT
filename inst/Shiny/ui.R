@@ -3,7 +3,7 @@ library(shiny)
 # Interface for SemNeT
 ui <- (
   
-  navbarPage("Semantic Network Analysis with SemNeT",
+  navbarPage(title = "Semantic Network Analysis with SemNeT",
              
              # Network Estimation Panel
              tabPanel(
@@ -12,21 +12,32 @@ ui <- (
                # Input
                sidebarPanel(
                  
-                 tags$div(fileInput("data", label = "Upload preprocessed binary response matrix",
+                 # Environment objects
+                 uiOutput("clean_ui"), uiOutput("group_ui"),
+                 
+                 # Data upload
+                 tags$div(fileInput("data", label = "Upload Preprocessed (Binary) Response Matrix",
                                     accept = c(".rds", ".csv", ".xls", ".xlsx", ".txt")), id = "data"),
                  
-                 tags$div(fileInput("group", label = "Upload group variable"), id = "group"),
+                 # Group variable upload
+                 tags$div(fileInput("group", label = "Upload Group Variable"), id = "group"),
                  
-                 selectInput("assoc", "Association Measure", c("Angular", "Cosine",
-                                                               "Euclidean Distance",
-                                                               "Faith", "Jaccard Index",
-                                                               "Pearson's Correlation",
-                                                               "RR"),
-                             selected = "Cosine"),
+                 # Network estimation method
+                 selectInput("estimation", "Network Estimation Method", c("",
+                                                                          "Community Network (CN)",
+                                                                          "Naive Random Walk (NRW)",
+                                                                          "Pathfinder Network (PN)",
+                                                                          "Triangulated Maximally Filtered Graph (TMFG)"
+                 )),
                  
-                 tags$div(textInput("minCase", label = "Minimum Cases", value = "2"), id = "minCase"),
                  
-                 actionButton("run_est", label = "Run Semantic Networks")
+                 uiOutput("network_options_1"),
+                 
+                 uiOutput("network_options_2"),
+                 
+                 actionButton("run_est", label = "Estimate Networks"),
+                 
+                 actionButton("reset", label = "Clear Results")
                  
                ),
                
@@ -58,9 +69,9 @@ ui <- (
                )
              ),
              
-             # Partial Bootstrap Network Analyses Panel
+             # Bootstrap Network Analyses Panel
              tabPanel(
-               "Partial Bootstrap Network Analyses",
+               "Bootstrap Network Analyses",
                
                # Input
                sidebarPanel(
@@ -69,11 +80,9 @@ ui <- (
                  
                  uiOutput("cores_boot"),
                  
-                 checkboxGroupInput("percent", label = "Percentage of Nodes Remaining",
-                                    choiceNames = paste(seq(50,90,10),"%",sep=""),
-                                    choiceValues = seq(.50,.90,.10), inline = TRUE),
+                 uiOutput("type"),
                  
-                 actionButton("run_boot", label = "Run Partial Bootstrap Analyses")
+                 actionButton("run_boot", label = "Run Bootstrap Analyses")
                  
                ),
                
@@ -81,7 +90,8 @@ ui <- (
                mainPanel(
                  tableOutput("aspl"),
                  tableOutput("cc"),
-                 tableOutput("q")
+                 tableOutput("q"),
+                 tableOutput("tab")
                )
              ),
              
@@ -106,5 +116,6 @@ ui <- (
              
              # Use shinyalert
              shinyalert::useShinyalert()
+             
   )
 )
