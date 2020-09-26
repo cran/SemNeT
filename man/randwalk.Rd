@@ -4,7 +4,7 @@
 \alias{randwalk}
 \title{Random Walk Simulation}
 \usage{
-randwalk(A, B, reps = 20, steps = 10, iter = 10000, short.res = TRUE, cores)
+randwalk(A, B, reps = 20, steps = 10, iter = 10000, cores)
 }
 \arguments{
 \item{A}{Matrix or data frame.
@@ -24,10 +24,6 @@ Defaults to \code{10}}
 \item{iter}{Numeric.
 Number of iterations for each random walk.
 Defaults to \code{10000}}
-
-\item{short.res}{Boolean.
-Should shorten results (p-values only) be produced?
-Defaults to \code{TRUE}}
 
 \item{cores}{Numeric.
 Number of computer processing cores to use for bootstrapping samples.
@@ -51,12 +47,12 @@ two <- sim.fluency(10)
 cos1 <- similarity(one, method = "cosine")
 cos2 <- similarity(two, method = "cosine")
 
-# Compute networks using NetworkToolbox
-net1 <- NetworkToolbox::TMFG(cos1)$A
-net2 <- NetworkToolbox::TMFG(cos2)$A
+# Compute networks
+net1 <- TMFG(cos1)
+net2 <- TMFG(cos2)
 \donttest{
 # Run random walk analysis
-rw.results <- randwalk(net1, net2, iter = 1000, cores = 2)
+rw.results <- randwalk(net1, net2, iter = 100, cores = 2)
 }
 \dontshow{rw.results <- randwalk(net1, net2, iter = 10, cores = 2)}
 

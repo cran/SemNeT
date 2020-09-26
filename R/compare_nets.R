@@ -59,9 +59,9 @@
 #' cos1 <- similarity(one, method = "cosine")
 #' cos2 <- similarity(two, method = "cosine")
 #' 
-#' # Compute networks using NetworkToolbox
-#' net1 <- NetworkToolbox::TMFG(cos1)$A
-#' net2 <- NetworkToolbox::TMFG(cos2)$A
+#' # Compute networks
+#' net1 <- TMFG(cos1)
+#' net2 <- TMFG(cos2)
 #' 
 #' # Compare networks
 #' compare_nets(net1, net2, title = list("One", "Two"), config = "spring")
@@ -132,7 +132,7 @@ compare_nets <- function (..., title, config,
     {
         #Change weights
         if(!weighted)
-        {datalist[[i]] <- NetworkToolbox::binarize(datalist[[i]])}
+        {datalist[[i]] <- binarize(datalist[[i]])}
         
         #Diagonals to zero
         diag(datalist[[i]]) <- 0
@@ -148,19 +148,19 @@ compare_nets <- function (..., title, config,
         labs[[i]] <- as.factor(colnames(datalist[[i]]))
     }
     
-    #Manipulate R plot window
+    # Manipulate R plot window
     if(length(datalist) == 2)
     {layout(t(1:2))
     }else if(length(datalist) > 2)
     {
-        #Find square root
+        # Find square root
         len <- floor(sqrt(length(datalist)))
         
-        #Remainder
-        remain <- length(datalist)%%len
+        # Remainder
+        remain <- ceiling(length(datalist) / len)
         
-        #Change layout accordingly
-        layout(t(matrix(1:(length(datalist)+remain),ncol=len)))
+        # Change layout accordingly
+        layout(t(matrix(1:(len*remain),ncol=len,nrow=remain)))
     }
     
     #Change layout arguments to FALSE
