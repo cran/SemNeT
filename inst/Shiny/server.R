@@ -18,17 +18,51 @@ server <- function(input, output, session)
     if(sum(tc.object) != 0)
     {
       output$clean_ui <- renderUI({
-        selectInput("clean_envir", label = "textcleaner Objects Detected in Environment. Use?",
-                    choices = c("", prev.env[tc.object]), selected = 1)
+        
+        tagList(
+          
+          tags$style(
+            ".tooltip-inner {
+                 width: 350px;
+               }"
+          ),
+          
+          shinyBS::tipify(
+            selectInput("clean_envir", label = "textcleaner Objects",
+                        choices = c("", prev.env[tc.object]), selected = 2),
+            "<code>textcleaner</code> objects that were found in your R environment. SemNeTShiny will automatically load the proper data from the object for semantic network analysis",
+            placement = "right"
+          )
+          
+        )
+        
       })
     }
     
     if(exists("group"))
     {
+      
       output$group_ui <- renderUI({
-        radioButtons("group_envir", label = "R Object 'group' Detected in Environment. Use?",
-                     choices = c("Yes", "No"), inline = TRUE, selected = "Yes")
+        
+        tagList(
+          
+          tags$style(
+            ".tooltip-inner {
+                 width: 350px;
+               }"
+          ),
+          
+          shinyBS::tipify(
+            radioButtons("group_envir", label = "'group' Object. Use?",
+                         choices = c("Yes", "No"), inline = TRUE, selected = "Yes"),
+            "A <code>group</code> object that was found in your R environment",
+            placement = "right"
+          )
+          
+        )
+        
       })
+    
     }
   }
   
@@ -118,12 +152,14 @@ server <- function(input, output, session)
                  if(!is.null(input$clean_envir) || !is.null(input$group_envir))
                  {
                    # Load data from R environment
-                   if(input$clean_envir != "")
+                   if(input$clean_envir != ""){
                      dat <<- get(input$clean_envir, envir = globalenv())$responses$clean
+                   }
                    
                    # Load group from R environment
-                   if(input$group_envir == "Yes")
-                   {group <<- group}
+                   if(input$group_envir == "Yes"){
+                     group <<- group
+                   }
                  }
                  
                  # Load preprocessed data
@@ -151,9 +187,6 @@ server <- function(input, output, session)
                  # Show network estimation tab
                  showTab(inputId = "tabs", target = "Network Estimation")
                  
-                 # Show save and reset tab
-                 showTab(inputId = "tabs", target = "Save and Reset All Results")
-                 
                  # Show save data button
                  shinyjs::show("save_data")
                  
@@ -176,17 +209,67 @@ server <- function(input, output, session)
     
     network <- input$estimation
     
-    if(network == "Community Network (CN)")
-    {numericInput("window", label = "Window Size", value = 2, min = 1, max = Inf)
-    }else if(network == "Naive Random Walk (NRW)")
-    {numericInput("threshold", label = "Threshold (Minimum Number of Co-occurrences)", value = 3, min = 1, max = Inf)
-    }else if(network == "Triangulated Maximally Filtered Graph (TMFG)")
-    {selectInput("assoc", label = "Association Measure", choices = c("Angular", "Cosine",
-                                                                     "Euclidean Distance",
-                                                                     "Faith", "Jaccard Index",
-                                                                     "Pearson's Correlation",
-                                                                     "RR"), selected = "Cosine"
-    )}
+    if(network == "Community Network (CN)"){
+    
+      tagList(
+        
+        tags$style(
+          ".tooltip-inner {
+                 width: 350px;
+               }"
+        ),
+        
+        shinyBS::tipify(
+          numericInput("window", label = "Window Size", value = 2, min = 1, max = Inf),
+          "Sets the distance for co-occurrence from a given response (e.g., the default is 2 responses before and after a given response)",
+          placement = "right"
+        )
+        
+      )
+      
+    }else if(network == "Naive Random Walk (NRW)"){
+      
+      tagList(
+        
+        tags$style(
+          ".tooltip-inner {
+                 width: 350px;
+               }"
+        ),
+        
+        shinyBS::tipify(
+          selectInput("NRW_type", label = paste("Number or Proportion of Minimum Co-Occurrences"),
+                      choices = c("Number", "Proportion")),
+          "Whehter the minimum number of co-occurrences should be a specific number (e.g., 3) or a proportion of co-occurrences given the sample size (e.g., .05)",
+          placement = "right"
+        )
+        
+      )
+      
+    }else if(network == "Triangulated Maximally Filtered Graph (TMFG)"){
+      
+      tagList(
+        
+        tags$style(
+          ".tooltip-inner {
+                 width: 350px;
+               }"
+        ),
+        
+        shinyBS::tipify(
+          selectInput("assoc", label = "Association Measure", choices = c("Angular", "Cosine",
+                                                                          "Euclidean Distance",
+                                                                          "Faith", "Jaccard Index",
+                                                                          "Pearson's Correlation",
+                                                                          "RR"), selected = "Cosine"
+          ),
+          "Association measure that is used to compute an association matrix (e.g., correlation matrix). There are many options but cosine similarity and Pearson's correlation are the most commonly used. Cosine produces values between 0 and 1; Pearson's correlation produces values between -1 and 1",
+          placement = "right"
+        )
+        
+      )
+      
+    }
     
   })
   
@@ -195,10 +278,92 @@ server <- function(input, output, session)
     
     network <- input$estimation
     
-    if(network == "Community Network (CN)")
-    {selectInput("alpha", label = paste("Significance Level"), choices = c(.05, .01, .001))
-    }else if(network == "Triangulated Maximally Filtered Graph (TMFG)")
-    {numericInput("minCase", label = "Minimum Number of Responses", value = 2, min = 1, max = Inf)}
+    if(network == "Community Network (CN)"){
+      
+      tagList(
+        
+        tags$style(
+          ".tooltip-inner {
+                 width: 350px;
+               }"
+        ),
+        
+        shinyBS::tipify(
+          selectInput("alpha", label = paste("Significance Level"), choices = c(.05, .01, .001)),
+          "Sets &alpha; to infer whether responses co-occurred by random chance using a binomial distribution",
+          placement = "right"
+        )
+        
+      )
+      
+    }else if(network == "Naive Random Walk (NRW)"){
+      
+      # Handles warning for initialization
+      if(!is.null(input$NRW_type)){
+        
+        if(input$NRW_type == "Number"){
+          
+          tagList(
+            
+            tags$style(
+              ".tooltip-inner {
+                 width: 350px;
+               }"
+            ),
+            
+            shinyBS::tipify(
+              
+              numericInput("threshold", label = "Threshold", value = 3, min = 1, max = Inf, step = 1),
+              "Sets the threshold for the minimum number of co-occurrences between two responses in the random walks for there to be an edge between them in the network",
+              placement = "right"
+              
+            )
+            
+          )
+          
+        }else if(input$NRW_type == "Proportion"){
+          
+          tagList(
+            
+            tags$style(
+              ".tooltip-inner {
+                 width: 350px;
+               }"
+            ),
+            
+            shinyBS::tipify(
+              
+              numericInput("threshold", label = "Threshold", value = .05, min = .01, max = 1, step = .01),
+              "Sets the threshold for the minimum number of co-occurrences between two responses in the random walks for there to be an edge between them in the network",
+              placement = "right"
+              
+            )
+            
+          )
+          
+        }
+        
+      }
+      
+    }else if(network == "Triangulated Maximally Filtered Graph (TMFG)"){
+      
+      tagList(
+        
+        tags$style(
+          ".tooltip-inner {
+                 width: 350px;
+               }"
+        ),
+        
+        shinyBS::tipify(
+          numericInput("minCase", label = "Minimum Number of Responses", value = 2, min = 1, max = Inf),
+          "The minimum number of responses provided by at least <em>n</em> participants across the groups. Must be equal to 2 for Pearson's correlation",
+          placement = "right"
+        )
+        
+      )
+      
+    }
     
   })
   
@@ -207,8 +372,25 @@ server <- function(input, output, session)
     
     network <- input$estimation
     
-    if(network == "Community Network (CN)")
-    {selectInput("enrich", label = paste("Enrich Network"), choices = c(FALSE, TRUE))}
+    if(network == "Community Network (CN)"){
+      
+      tagList(
+        
+        tags$style(
+          ".tooltip-inner {
+                 width: 350px;
+               }"
+        ),
+        
+        shinyBS::tipify(
+          selectInput("enrich", label = paste("Enrich Network"), choices = c(FALSE, TRUE)),
+          "Whether to use a clustering approach to connect all nodes that are in the same cluster. Most commonly <em>not</em> used in the literature (i.e., FALSE), however, Go&ntilde;i et al. (2011) demonstrated greater agreement for clustering and switching with human raters when the networks were enriched (i.e., TRUE)",
+          placement = "right"
+        )
+        
+      )
+    
+    }
     
   })
   
@@ -270,7 +452,7 @@ server <- function(input, output, session)
                      HTML(
                        
                        paste('<b>Please cite:</b><br>
-                       Goni, J., Arrondo, G., Sepulcre, J., Martincorena, I., de Mendizabel, N. V., Corominas-Murtra, B., ... & Villoslada, P. (2011). The semantic organization of the animal category: Evidence from semantic verbal fluency and network theory. <em>Cognitive Processing</em>, <em>12</em>, 183-196. <a href="https://doi.org/10.1007/s10339-010-0372-x">https://doi.org/10.1007/s10339-010-0372-x</a>
+                       Goni, J., Arrondo, G., Sepulcre, J., Martincorena, I., de Mendizabel, N. V., Corominas-Murtra, B., ... & Villoslada, P. (2011). The semantic organization of the animal category: Evidence from semantic verbal fluency and network theory. <em>Cognitive Processing</em>, <em>12</em>, 183&ndash;196. <a href="https://doi.org/10.1007/s10339-010-0372-x">https://doi.org/10.1007/s10339-010-0372-x</a>
                              ')
                      )
                      
@@ -278,11 +460,17 @@ server <- function(input, output, session)
                    
                  }else if(network == "NRW")
                  {
+                   
+                   nrw_type <<- switch(input$NRW_type,
+                                       "Number" = "num",
+                                       "Proportion" = "prop"
+                   )
+                   
                    thresh <<- input$threshold
                    
                    ## Estimate networks
                    nets <<- lapply(mget(paste(uniq), envir = globalenv()),
-                                   function(x){NRW(x, threshold = thresh)})
+                                   function(x){NRW(x, type = nrw_type, threshold = thresh)})
                    
                    # naive random walk citation
                    output$net_cite <- renderUI({
@@ -290,7 +478,7 @@ server <- function(input, output, session)
                      HTML(
                        
                        paste('<b>Please cite:</b><br>
-                       Lerner, A. J., Ogrocki, P. K., & Thomas, P. J. (2009). Network graph analysis of category fluency testing. <em>Cognitive and Behavioral Neurology</em>, <em>22</em>, 45-52. <a href="https://doi.org/10.1097/WNN.0b013e318192ccaf">https://doi.org/10.1097/WNN.0b013e318192ccaf</a>
+                       Lerner, A. J., Ogrocki, P. K., & Thomas, P. J. (2009). Network graph analysis of category fluency testing. <em>Cognitive and Behavioral Neurology</em>, <em>22</em>, 45&ndash;52. <a href="https://doi.org/10.1097/WNN.0b013e318192ccaf">https://doi.org/10.1097/WNN.0b013e318192ccaf</a>
                              ')
                      )
                      
@@ -308,9 +496,9 @@ server <- function(input, output, session)
                      HTML(
                        
                        paste('<b>Please cite:</b><br>
-                       Paulsen, J. S., Romero, R., Chan, A., Davis, A. V., Heaton, R. K., & Jeste, D. V. (1996). Impairment of the semantic network in schizophrenia. <em>Psychiatry Research</em>, <em>63(2-3)</em>, 109-121. <a href="https://doi.org/10.1016/0165-1781(96)02901-0">https://doi.org/10.1016/0165-1781(96)02901-0</a>
+                       Paulsen, J. S., Romero, R., Chan, A., Davis, A. V., Heaton, R. K., & Jeste, D. V. (1996). Impairment of the semantic network in schizophrenia. <em>Psychiatry Research</em>, <em>63</em>, 109&ndash;121. <a href="https://doi.org/10.1016/0165-1781(96)02901-0">https://doi.org/10.1016/0165-1781(96)02901-0</a>
                        <br><br>
-                       Quirin, A., Cordon, O., Guerrero-Bote, V. P., Vargas-Quesada, B., & Moya-Aneon, F. (2008). A quick MST-based algorithm to obtain Pathfinder networks (Inf, n-1). <em>Journal of the American Society for Information Science and Technology</em>, <em>59</em>, 1912-1924. <a href="https://doi.org/10.1002/asi.20904">https://doi.org/10.1002/asi.20904</a>
+                       Quirin, A., Cordon, O., Guerrero-Bote, V. P., Vargas-Quesada, B., & Moya-Aneon, F. (2008). A quick MST-based algorithm to obtain Pathfinder networks (&infin;, <em>n</em> - 1). <em>Journal of the American Society for Information Science and Technology</em>, <em>59</em>, 1912&ndash;1924. <a href="https://doi.org/10.1002/asi.20904">https://doi.org/10.1002/asi.20904</a>
                        <br><br>
                        Schvaneveldt, R. W. (1990). <em>Pathfinder associative networks: Studies in knowledge organization</em>. Norwood, NJ: Ablex Publishing.
                              ')
@@ -356,7 +544,7 @@ server <- function(input, output, session)
                      HTML(
                        
                        paste('<b>Please cite:</b><br>
-                       Massara, G. P., Di Matteo, T., & Aste, T. (2016). Network filtering for big data: Triangulated maximally filtered graph. <em>Journal of Complex Networks</em>, <em>5</em>, 161-178. <a href="https://doi.org/10.1093/comnet/cnw015">https://doi.org/10.1093/comnet/cnw015</a>
+                       Massara, G. P., Di Matteo, T., & Aste, T. (2016). Network filtering for big data: Triangulated maximally filtered graph. <em>Journal of Complex Networks</em>, <em>5</em>, 161&ndash;178. <a href="https://doi.org/10.1093/comnet/cnw015">https://doi.org/10.1093/comnet/cnw015</a>
                              ')
                      )
                      
@@ -411,6 +599,8 @@ server <- function(input, output, session)
                  #showTab(inputId = "tabs", target = "Permutation Analyses")
                  showTab(inputId = "tabs", target = "Random Walk Analyses")
                  showTab(inputId = "tabs", target = "Spreading Activation Analyses")
+                 # Show save and reset tab
+                 showTab(inputId = "tabs", target = "Save and Reset All Results")
                  
                  # Update permutation tab
                  ## Group selection
@@ -481,7 +671,7 @@ server <- function(input, output, session)
                      paste('<b>Please cite:</b><br>
                        Kenett, Y. N., Wechsler-Kashi, D., Kenett, D. Y., Schwartz, R. G., Ben Jacob, E., & Faust, M. (2013). Semantic organization in children with cochlear implants: Computational analysis of verbal fluency. <em>Frontiers in Psychology</em>, <em>4</em>, 543. <a href="https://doi.org/10.3389/fpsyg.2013.00543">https://doi.org/10.3389/fpsyg.2013.00543</a>
                        <br><br>
-                       Viger, F., & Latapy, M. (2016). Efficient and simple generation of random simple connected graphs with prescribed degree sequence. <em>Journal of Complex Networks</em>, <em>4</em>, 15-37. <a href="https://doi.org/10.1093/comnet/cnv013">https://doi.org/10.1093/comnet/cnv013</a>
+                       Viger, F., & Latapy, M. (2016). Efficient and simple generation of random simple connected graphs with prescribed degree sequence. <em>Journal of Complex Networks</em>, <em>4</em>, 15&ndash;37. <a href="https://doi.org/10.1093/comnet/cnv013">https://doi.org/10.1093/comnet/cnv013</a>
                              ')
                    )
                    
@@ -489,17 +679,32 @@ server <- function(input, output, session)
                  
                  
                  # partial bootstrap citation
-                 if(network == "TMFG")
-                 {
+                 if(network == "TMFG"){
                    output$partial_cite <- renderUI({
                      
                      HTML(
                        
-                       paste('<b>Please cite:</b><br>
-                       Christensen, A. P., Kenett, Y. N., Cotter, K. N., Beaty, R. E., & Silvia, P. J. (2018). Remotely close associations: Openness to experience and semantic memory structure. <em>European Journal of Personality</em>, <em>32</em>, 480-492. <a href="https://doi.org/10.1002/per.2157">https://doi.org/10.1002/per.2157</a>
+                       paste('<b>Effect sizes (<em>&eta;<sub>p</sub><sup>2</sup></em>): small (.01), medium (.06), and large (.14)</b>
+                       <br>
+                       Cohen, J. (1988). <em>Statistical power analysis for the behavioural sciences</em> (2nd ed.). New York, NY: Routledge. <a href="https://doi.org/10.4324/9780203771587">https://doi.org/10.4324/9780203771587</a> 
+                       <br><br>
+                       <b>Please cite:</b><br>
+                       Christensen, A. P., Kenett, Y. N., Cotter, K. N., Beaty, R. E., & Silvia, P. J. (2018). Remotely close associations: Openness to experience and semantic memory structure. <em>European Journal of Personality</em>, <em>32</em>, 480&ndash;492. <a href="https://doi.org/10.1002/per.2157">https://doi.org/10.1002/per.2157</a>
                        <br><br>
                        Kenett, Y. N., Wechsler-Kashi, D., Kenett, D. Y., Schwartz, R. G., Ben Jacob, E., & Faust, M. (2013). Semantic organization in children with cochlear implants: Computational analysis of verbal fluency. <em>Frontiers in Psychology</em>, <em>4</em>, 543. <a href="https://doi.org/10.3389/fpsyg.2013.00543">https://doi.org/10.3389/fpsyg.2013.00543</a>
                              ')
+                     )
+                     
+                   })
+                 }else{
+                   output$partial_cite <- renderUI({
+                     
+                     HTML(
+                       
+                       paste('<b>Effect sizes (<em>&eta;<sub>p</sub><sup>2</sup></em>): small (.01), medium (.06), and large (.14)</b>
+                       <br>
+                       Cohen, J. (1988). <em>Statistical power analysis for the behavioural sciences</em> (2nd ed.). New York, NY: Routledge. <a href="https://doi.org/10.4324/9780203771587">https://doi.org/10.4324/9780203771587</a> 
+                       ')
                      )
                      
                    })
@@ -550,6 +755,12 @@ server <- function(input, output, session)
                                             
                                             # Update citation
                                             output$net_cite <- renderUI({})
+                                            
+                                            # Update to tabs
+                                            updateNavbarPage(session = session,
+                                                             inputId = "tabs",
+                                                             selected = "Network Estimation"
+                                                             )
                                             
                                             # Hide tabs
                                             hideTab(inputId = "tabs", target = "Random Network Analyses")
@@ -898,7 +1109,7 @@ server <- function(input, output, session)
                      if(network == "CN")
                      {methodArgs <- list(window = window_size, alpha = sig_alpha, enrich = enrichment)
                      }else if(network == "NRW")
-                     {methodArgs <- list(threshold = thresh)
+                     {methodArgs <- list(type = nrw_type, threshold = thresh)
                      }else if(network == "PF")
                      {methodArgs <- list()}
                      
@@ -1149,7 +1360,7 @@ server <- function(input, output, session)
     HTML(
       
       paste('<b>Please cite:</b><br>
-            Kenett, Y. N., & Austerweil, J. L. (2016). Examining search processes in low and high creative individiuals with random walks. In <em>Proceeding of the 38th annual meeting of the cognitive science society</em> (pp. 313-318). Austin, TX. Retrieved from <a href="https://cogsci.mindmodeling.org/2016/papers/0066/index.html">https://cogsci.mindmodeling.org/2016/papers/0066/index.html</a>')
+            Kenett, Y. N., & Austerweil, J. L. (2016). Examining search processes in low and high creative individiuals with random walks. In <em>Proceeding of the 38th annual meeting of the cognitive science society</em> (pp. 313&ndash;318). Austin, TX. Retrieved from <a href="https://cogsci.mindmodeling.org/2016/papers/0066/index.html">https://cogsci.mindmodeling.org/2016/papers/0066/index.html</a>')
       
     )
     
@@ -1226,7 +1437,7 @@ server <- function(input, output, session)
     HTML(
       
       paste('<b>Please cite:</b><br>
-            Siew, C. S. Q. (2019). spreadr: An R package to simulate spreading activation in a network. <em>Behavior Research Methods</em>, <em>51</em>, 910-929. <a href="https://doi.org/10.3758/s13428-018-1186-5">https://doi.org/10.3758/s13428-018-1186-5</a>')
+            Siew, C. S. Q. (2019). spreadr: An R package to simulate spreading activation in a network. <em>Behavior Research Methods</em>, <em>51</em>, 910&ndash;929. <a href="https://doi.org/10.3758/s13428-018-1186-5">https://doi.org/10.3758/s13428-018-1186-5</a>')
       
     )
     
@@ -1928,6 +2139,11 @@ server <- function(input, output, session)
     
     # Remove all other variables from global environment
     rm(list = ls(envir = globalenv())[-match(c("resultShiny", prev.env), ls(globalenv()))], envir = globalenv())
+    
+    # Print message to user to let them know output saved as resultShiny
+    message(
+      '\n\nThe last analyses and results in `SemNeTShiny()` have been saved in an object called "resultShiny" in R\'s environment'
+    )
     
     # Remove plots from user view
     if(!is.null(dev.list()))

@@ -1,9 +1,9 @@
-library(shiny)
-library(shinyalert)
-library(shinyjs)
-library(shinyMatrix)
-library(shinyBS)
-library(SemNeT)
+suppressMessages(library(shiny))
+suppressMessages(library(shinyalert))
+suppressMessages(library(shinyjs))
+suppressMessages(library(shinyMatrix))
+suppressMessages(library(shinyBS))
+suppressMessages(library(SemNeT))
 
 # Interface for SemNeT----
 ui <- (
@@ -45,6 +45,8 @@ ui <- (
                tagList(
                  
                  mainPanel(
+                   
+                   HTML('<center><img src = "SemNeT.png" width = "500", ></center>'),
                    
                    tableOutput("example_data_response"),
                    

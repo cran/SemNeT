@@ -1099,8 +1099,8 @@ bootSemNeTShiny <- function (dat, method = c("CN", "NRW", "PF", "TMFG"),
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
 #' 
 #' @noRd
-#Test: Partial Bootstrapped Network Statistics----
-# Updated 19.06.2020
+#Test: Bootstrapped Network Statistics----
+# Updated 01.12.2020
 test.bootSemNeTShiny <- function (input, measures = c("ASPL", "CC", "Q"), formula = NULL, groups = NULL)
 {
     #Missing arguments
@@ -1191,6 +1191,8 @@ test.bootSemNeTShiny <- function (input, measures = c("ASPL", "CC", "Q"), formul
         tab.acov <- cbind(round(adj.vals, 3), tab.acov)
         #Add residual degrees of freedom
         tab.acov <- as.data.frame(cbind(tab.acov[,c(1:(length(names)+2))], unlist(res.df), tab.acov[,(length(names)+3):ncol(tab.acov)]), stringsAsFactors = FALSE)
+        #Recheck names
+        name <- colnames(tab.acov)[1:length(name)]
         
         # Provided direction if two groups
         if(length(name) == 2)
@@ -1233,6 +1235,8 @@ test.bootSemNeTShiny <- function (input, measures = c("ASPL", "CC", "Q"), formul
             tab.acov <- cbind(round(adj.vals[grep(measures[[j]], row.names(adj.vals)),], 3), tab.acov)
             #Add residual degrees of freedom
             tab.acov <- as.data.frame(cbind(tab.acov[,c(1:(length(names)+2))], unlist(res.val), tab.acov[,(length(names)+3):ncol(tab.acov)]), stringsAsFactors = FALSE)
+            #Recheck names
+            name <- colnames(tab.acov)[1:length(name)]
             
             # Provided direction if two groups
             if(length(name) == 2)
@@ -1340,7 +1344,7 @@ test.bootSemNeTShiny <- function (input, measures = c("ASPL", "CC", "Q"), formul
 #' 
 #' @noRd
 # Test: Bootstrapped Network Statistics----
-# Updated 25.09.2020
+# Updated 24.11.2020
 boot.one.testShiny <- function (bootSemNeT.obj, measures = c("ASPL", "CC", "Q"), formula = NULL, groups = NULL)
 {
     #Check for data if formula is not NULL
@@ -1395,7 +1399,7 @@ boot.one.testShiny <- function (bootSemNeT.obj, measures = c("ASPL", "CC", "Q"),
             meas <- bootSemNeT.obj[[paste(name[j],"Meas",sep="")]][measures[i],]
             
             # Nodes
-            nodes <- unlist(lapply(bootSemNeT.obj[[paste(name[j],"Net",sep="")]], function(x){ncol(x)}))
+            #nodes <- unlist(lapply(bootSemNeT.obj[[paste(name[j],"Net",sep="")]], function(x){ncol(x)}))
             
             # Edges
             edges <- unlist(lapply(bootSemNeT.obj[[paste(name[j],"Net",sep="")]], function(x){
@@ -1405,7 +1409,8 @@ boot.one.testShiny <- function (bootSemNeT.obj, measures = c("ASPL", "CC", "Q"),
             }))
             
             #Initialize matrix
-            mat <- cbind(rep(name[j], length(meas)), meas, nodes, edges)
+            mat <- cbind(rep(name[j], length(meas)), meas, #nodes,
+                         edges)
             
             if(j != 1)
             {new.mat <- rbind(new.mat, mat)
@@ -1414,9 +1419,10 @@ boot.one.testShiny <- function (bootSemNeT.obj, measures = c("ASPL", "CC", "Q"),
         
         #Convert to data frame
         aov.obj <- as.data.frame(new.mat, stringsAsFactors = FALSE)
-        colnames(aov.obj) <- c("Name", "Measure", "Nodes", "Edges")
-        aov.obj$Name <- as.factor(as.character(aov.obj$Name))
-        aov.obj[,2:4] <- apply(aov.obj[,2:4], 2, function(x){as.numeric(as.character(x))})
+        colnames(aov.obj) <- c("Name", "Measure", #"Nodes",
+                               "Edges")
+        aov.obj$Name <- factor(as.character(aov.obj$Name))
+        aov.obj[,2:3] <- apply(aov.obj[,2:3], 2, function(x){as.numeric(as.character(x))})
         
         #Organize groups
         aov.obj <- as.data.frame(cbind(aov.obj, rep.rows(groups, iter)), stringsAsFactors = FALSE)
@@ -1437,16 +1443,28 @@ boot.one.testShiny <- function (bootSemNeT.obj, measures = c("ASPL", "CC", "Q"),
         ## Bell, A., Jones, K., & Fairbrother, M. (2018).
         ## \emph{Quality & Quantity Volume} \emph{52}, 2031-2036.
         ##https://doi.org/10.1007/s11135-017-0593-5
-        if("Nodes" %in% names(aov.obj))
-        {
-            for(g in 1:nrow(groups))
-            {aov.obj$Nodes[which(aov.obj$Group == groups[g,])] <- scale(aov.obj$Nodes[which(aov.obj$Group == groups[g,])])}
-        }
+        #if("Nodes" %in% names(aov.obj))
+        #{
+        #  for(g in 1:nrow(groups))
+        #  {
+        #    if(length(unique((aov.obj$Nodes[which(aov.obj$Group == groups[g,])]))) == 1){
+        #      aov.obj$Nodes[which(aov.obj$Group == groups[g,])] <- 0
+        #    }else{
+        #      aov.obj$Nodes[which(aov.obj$Group == groups[g,])] <- scale(aov.obj$Nodes[which(aov.obj$Group == groups[g,])])
+        #    }
+        #  }
+        #}
         
         if("Edges" %in% names(aov.obj))
         {
             for(g in 1:nrow(groups))
-            {aov.obj$Edges[which(aov.obj$Group == groups[g,])] <- scale(aov.obj$Edges[which(aov.obj$Group == groups[g,])])}
+            {
+                if(length(unique((aov.obj$Edges[which(aov.obj$Group == groups[g,])]))) == 1){
+                    aov.obj$Edges[which(aov.obj$Group == groups[g,])] <- 0
+                }else{
+                    aov.obj$Edges[which(aov.obj$Group == groups[g,])] <- scale(aov.obj$Edges[which(aov.obj$Group == groups[g,])])
+                }
+            }
         }
         
         #Formula
@@ -1461,9 +1479,11 @@ boot.one.testShiny <- function (bootSemNeT.obj, measures = c("ASPL", "CC", "Q"),
         
         #ANOVA formula
         ##Catch Pathfinder Network method
-        if(all(aov.obj$Nodes - aov.obj$Edges == 1))
-        {aov.formula <- paste(split.formula[1], "~ ", paste(names(keep.vars)[4][keep.vars[4]], collapse = " + "), " +", split.formula[2], sep = "")
-        }else{aov.formula <- paste(split.formula[1], "~ ", paste(names(keep.vars)[3:4][keep.vars[3:4]], collapse = " + "), " +", split.formula[2], sep = "")}
+        #if(all(aov.obj$Nodes - aov.obj$Edges == 1))
+        #{aov.formula <- paste(split.formula[1], "~ ", paste(names(keep.vars)[4][keep.vars[4]], collapse = " + "), " +", split.formula[2], sep = "")
+        #}else{
+        aov.formula <- paste(split.formula[1], "~ ", paste(names(keep.vars)[3][keep.vars[3]], collapse = " + "), " +", split.formula[2], sep = "")
+        #}
         
         #ANOVA
         aov.test <- aov(as.formula(aov.formula), data = aov.obj)
