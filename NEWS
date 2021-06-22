@@ -1,3 +1,14 @@
+Changes in version 1.4.2
+
+o FIX: bug in reset of Shiny application
+
+o FIX: name ordering of `bootSemNeT` plots
+
+o ADD: t-tests to `test.bootSemNeT` and Shiny app
+
+o FIX: p-value bug in random networks tests
+
+
 Changes in version 1.4.1
 
 o FIX: unequal nodes and edges in `test.bootSemNeT` (GitHub Issue #3)

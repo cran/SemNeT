@@ -6,6 +6,7 @@
 \usage{
 test.bootSemNeT(
   ...,
+  test = c("ANCOVA", "ANOVA", "t-test"),
   measures = c("ASPL", "CC", "Q"),
   formula = NULL,
   groups = NULL
@@ -13,6 +14,23 @@ test.bootSemNeT(
 }
 \arguments{
 \item{...}{Object(s) from \code{\link[SemNeT]{bootSemNeT}}}
+
+\item{test}{Character.
+Type of statistical test to be used.
+
+\itemize{
+
+\item{\code{"t-test"}}
+{Computes t-tests for all measures}
+
+\item{\code{"ANOVA"}}
+{Computes ANOVAs and includes
+Tukey's HSD for pairwise comparisons (\code{\link{TukeyHSD}})}
+
+\item{\code{"ANCOVA"}}
+{Computes ANCOVAs that control for the number of nodes
+and edges in the networks and includes adjusted means
+and Tukey's HSD for pairwise comparisons (\code{\link{TukeyHSD}})}}}
 
 \item{measures}{Character.
 Network measures to be tested.
@@ -87,9 +105,7 @@ and the adjusted \emph{p}-value (\code{p.adj})}
 }
 \description{
 Computes statistical tests for bootstrapped
-networks from \code{\link[SemNeT]{bootSemNeT}}. Computes ANCOVAs that
-control for the number of nodes and edges in the networks and includes
-adjusted means and Tukey's HSD for pairwise comparisons (\code{\link{TukeyHSD}})
+networks from \code{\link[SemNeT]{bootSemNeT}}
 }
 \examples{
 # Simulate Dataset
@@ -129,7 +145,8 @@ boot.sixty <- bootSemNeT(hihi, hilo, lohi, lolo, prop = .60,
 type = "node", method = "TMFG", cores = 2, iter = 100)
 
 ## Compute tests
-test.bootSemNeT(boot.fifty, boot.sixty, formula = "y ~ gf*caq", groups = groups)
+test.bootSemNeT(boot.fifty, boot.sixty,
+test = "ANOVA", formula = "y ~ gf*caq", groups = groups)
 }
 
 }

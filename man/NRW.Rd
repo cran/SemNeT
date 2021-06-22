@@ -4,7 +4,7 @@
 \alias{NRW}
 \title{Naive Random Walk Network Estimation}
 \usage{
-NRW(data, type = c("num", "prop"), threshold)
+NRW(data, type = c("num", "prop"), threshold = 0)
 }
 \arguments{
 \item{data}{Matrix or data frame.
@@ -23,11 +23,11 @@ Type of \code{threshold} to apply.
 {Minimum proportion of co-occurrences}
 
 }
-Defaults to \code{"nodes"}}
+Defaults to \code{"num"}}
 
 \item{threshold}{Numeric.
 Value of the minimum number or proportion of co-occurrences.
-Defaults to \code{3} for \code{"num"} and \code{.05} for \code{"prop"}}
+Defaults to \code{0} for both \code{"num"} and \code{"prop"}}
 }
 \value{
 Returns a undirected semantic network
@@ -57,7 +57,6 @@ high.net <- NRW(high)
 Lerner, A. J., Ogrocki, P. K., & Thomas, P. J. (2009).
 Network graph analysis of category fluency testing.
 \emph{Cognitive and Behavioral Neurology}, \emph{22}, 45-52.
-\href{https://doi.org/10.1097/WNN.0b013e318192ccaf}{https://doi.org/10.1097/WNN.0b013e318192ccaf}
 }
 \author{
 Alexander Christensen <alexpaulchristensen@gmail.com>

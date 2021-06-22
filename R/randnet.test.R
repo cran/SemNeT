@@ -41,11 +41,11 @@
 #' 
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
 #' 
-#' @importFrom stats dnorm
+#' @importFrom stats pnorm
 #' 
 #' @export
 # Random network test----
-# Updated 03.09.2020
+# Updated 05.12.2020
 randnet.test <- function (..., iter, cores)
 {
     #Missing arguments
@@ -76,7 +76,7 @@ randnet.test <- function (..., iter, cores)
     names(rand.list) <- name
     
     #Message for begin random networks
-    message("Generating random networks...", appendLF = FALSE)
+    message("Generating random networks...\n", appendLF = FALSE)
     
     #Parallel processing
     cl <- parallel::makeCluster(cores)
@@ -133,13 +133,13 @@ randnet.test <- function (..., iter, cores)
         
         ##ASPL
         z.aspl <- (meas["ASPL"] - sig.mat["ASPL","M.rand"]) / sig.mat["ASPL","SD.rand"]
-        sig.mat["ASPL",paste(name[i], "(p-value)")] <- round(dnorm(z.aspl, mean = sig.mat["ASPL","M.rand"], sd = sig.mat["ASPL","SD.rand"]),4)
+        sig.mat["ASPL",paste(name[i], "(p-value)")] <- round(2 * pnorm(-abs(z.aspl)), 4)
         ##CC
         z.cc <- (meas["CC"] - sig.mat["CC","M.rand"]) / sig.mat["CC","SD.rand"]
-        sig.mat["CC",paste(name[i], "(p-value)")] <- round(dnorm(z.cc, mean = sig.mat["CC","M.rand"], sd = sig.mat["CC","SD.rand"]),4)
+        sig.mat["CC",paste(name[i], "(p-value)")] <- round(2 * pnorm(-abs(z.cc)), 4)
         ##Q
         z.q <- (meas["Q"] - sig.mat["Q","M.rand"]) / sig.mat["Q","SD.rand"]
-        sig.mat["Q",paste(name[i], "(p-value)")] <- round(dnorm(z.q, mean = sig.mat["Q","M.rand"], sd = sig.mat["Q","SD.rand"]),4)
+        sig.mat["Q",paste(name[i], "(p-value)")] <- round(2 * pnorm(-abs(z.q)), 4)
     
         #Insert results
         res[[i]] <- sig.mat

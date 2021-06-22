@@ -19,11 +19,11 @@
 #' {Minimum proportion of co-occurrences}
 #' 
 #' }
-#' Defaults to \code{"nodes"}
+#' Defaults to \code{"num"}
 #' 
 #' @param threshold Numeric.
 #' Value of the minimum number or proportion of co-occurrences.
-#' Defaults to \code{3} for \code{"num"} and \code{.05} for \code{"prop"}
+#' Defaults to \code{0} for both \code{"num"} and \code{"prop"}
 #' 
 #' @return Returns a undirected semantic network
 #' 
@@ -47,37 +47,28 @@
 #' Lerner, A. J., Ogrocki, P. K., & Thomas, P. J. (2009).
 #' Network graph analysis of category fluency testing.
 #' \emph{Cognitive and Behavioral Neurology}, \emph{22}, 45-52.
-#' \href{https://doi.org/10.1097/WNN.0b013e318192ccaf}{https://doi.org/10.1097/WNN.0b013e318192ccaf}
 #' 
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
 #' 
 #' @export
 #' 
 # Naive Random Walk Network----
-# Updated 01.12.2020
-NRW <- function(data, type = c("num", "prop"), threshold)
+# Updated 05.12.2020
+NRW <- function(data, type = c("num", "prop"), threshold = 0)
 {
   # Check for type
   if(missing(type)){
     type <- "num"
   }else{type <- match.arg(type)}
-  
-  # Check for threshold
-  if(missing(threshold)){
-    threshold <- switch(type,
-      "num" = 3,
-      "prop" = .05
-    )
-  }else{
-    # Check for appropriate values
-    if(type == "num"){
-      if(threshold < 1){
-        stop("'threshold' must be greater than 1")
-      }
-    }else if(type == "prop"){
-      if(threshold > 1 || threshold < 0){
-        stop("'threshold' must be greater than 0 and less than 1")
-      }
+
+  # Check for appropriate threshold values
+  if(type == "num"){
+    if(threshold < 0){
+      stop("'threshold' must be greater than or equal to 0")
+    }
+  }else if(type == "prop"){
+    if(threshold > 1 || threshold < 0){
+      stop("'threshold' must be greater than or equal to 0 and less than 1")
     }
   }
   
@@ -144,11 +135,15 @@ NRW <- function(data, type = c("num", "prop"), threshold)
   bin.mat[bin.mat < threshold] <- 0
   
   # Change values greater than zero to one
-  bin.mat[bin.mat >= threshold] <- 1
-  
-  # Remove nodes with no connections
-  bin.mat <- bin.mat[-which(colSums(bin.mat) == 0),
-                     -which(colSums(bin.mat) == 0)]
+  if(threshold != 0){
+    bin.mat[bin.mat >= threshold] <- 1
+    
+    # Remove nodes with no connections
+    bin.mat <- bin.mat[-which(colSums(bin.mat) == 0),
+                       -which(colSums(bin.mat) == 0)]
+  }else{
+    bin.mat[bin.mat != 0] <- 1
+  }
   
   return(bin.mat)
 }
