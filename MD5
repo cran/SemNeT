@@ -1,6 +1,6 @@
-c6ceee492314038b171a42679c8f64b7 *DESCRIPTION
+cfad4e099571be365098a41e4ea321a5 *DESCRIPTION
 8cd9a1aa0fb61a84c20aea5f61a28a14 *NAMESPACE
-f8706aebe5614e37e1163580ff608fc6 *NEWS
+7d6845c2f09c4a087aed2bf0ca8a7dca *NEWS
 b1e329bc6d925a5593f735c370595582 *R/ASPL.R
 85db9339868647a449ab5175dadd69e0 *R/CC.R
 8346f5d7ccdee5a313ab36a4937cdda8 *R/CN.R
@@ -11,10 +11,10 @@ ae8ff47bc807adfe63d6e21a3d4aff57 *R/NRW.R
 dda78a282bff5eb72a78dc598563bb09 *R/SemNeTShiny.R
 c9dd0ee5ff24f5714721bd82b9c3b44b *R/TMFG.R
 5526fee9da2e8ce8e6b1b85280cd0b86 *R/animals.freq.R
-97bc481b4b1ba3a55372cf4574f74c63 *R/bootSemNeT.R
+00cb91f4a7f8782e66f2464b92e19c48 *R/bootSemNeT.R
 6249e7dc32a08dd9c9bdad7e30640040 *R/compare_nets.R
 e79cbd1699ab1d4bb69a27b258884c07 *R/convert2cytoscape.R
-ea1678159aeb5f92b6c2a7855c52ec10 *R/convert2igraph.R
+ed3bdb6bb5a415449d66d4c239b82496 *R/convert2igraph.R
 e0b7b54931868d4b2e161084c01ebc9b *R/equate.R
 9d367c2b2dd6d94014620d6cd41d3f77 *R/finalize.R
 f526b9b4721c5b94f4e0691269ebb270 *R/methods.R
@@ -34,8 +34,8 @@ cff02e6f6fd13799325fa68dd04cd1f5 *R/sim.fluency.R
 aeb4a4fb2ac2253097c85989d5637ad4 *R/similarity.R
 b8a8126772c8c46e5db7c1196450a515 *R/test.bootSemNeT.R
 7ea2c9e4c7107ff2bd278323c4754258 *R/two.result.R
-fc245fa5cbdf0eec866f1e5ebeb6e4f9 *R/utils-SemNeT.R
-695e89d4a9b51652f4670d6418b8f21e *R/utils-SemNeTShiny.R
+2509e7df0f821196280b859d9d636c6d *R/utils-SemNeT.R
+115e252ffeb43c24551041927d8b654f *R/utils-SemNeTShiny.R
 68d31a1c1931348045bd26067a35d5ef *R/vignette.plots.R
 498405f1fae43320e43d2a397058ad63 *R/zzz.R
 1d2edf3ba48681dbffa75877fc55cf3a *data/animals.freq.RData
@@ -48,7 +48,7 @@ fd7090c3a6bd297b4a60b667e0ef43c5 *data/open.group.RData
 07a91ef7f0e6e14d4bbc124789041ef6 *data/two.result.RData
 35f1a4eeb5655c496931b7269f16efb7 *data/vignette.plots.RData
 95250760aef95095c15ee2c327381c93 *inst/CITATION
-22d75bc6d48a8b5b4b148253f88104be *inst/Shiny/server.R
+47b3653d2395f5daf5966ba59e7eef0a *inst/Shiny/server.R
 132a7f7cb3e84df32739f1d13ae2363b *inst/Shiny/ui.R
 ed007df8d91b676de0accf748d601227 *inst/Shiny/www/SemNeT.png
 6d7966bec419fbda079723aac8cf90eb *man/ASPL.Rd
@@ -64,7 +64,7 @@ cf10c0cac68e95a748bb5342a6fd9f72 *man/animals.freq.Rd
 875405956c852cf8d4d8174ed3801cf1 *man/bootSemNeT.Rd
 507d729588509324c3129c8c59b828cf *man/compare_nets.Rd
 caf812778e0f246bf6021b81c12f1619 *man/convert2cytoscape.Rd
-509ca6a74e399ca0ba1376a8d612992d *man/convert2igraph.Rd
+35c7c6e1d962ea3d0684ef75593a674a *man/convert2igraph.Rd
 939e1d201ba8314326c2cd36338ad1ae *man/equate.Rd
 59f46a2b2167a7bf0f13e7b23313b986 *man/finalize.Rd
 f6be86881b461e1201c1efe12ac2745c *man/net.high.Rd
