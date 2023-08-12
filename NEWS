@@ -1,3 +1,10 @@
+Changes in version 1.4.4
+
+o FIX: minor fix to get back on CRAN
+
+o TODO: major refactor for the entire package to increase future reliability
+
+
 Changes in version 1.4.3
 
 o FIX: switching to different network estimations in Shiny app

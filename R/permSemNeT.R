@@ -133,8 +133,7 @@ permSemNeT <- function(sample1 = NULL, sample2 = NULL, iter,
       stop("Arguments 'sample1' and 'sample2' must be input or
            argument 'prev.perm' must have a previous result")
     }
-  }else if(class(prev.perm) != "permSemNeT")
-  {
+  }else if(!is(prev.perm, "permSemNeT")){
     stop("Object input into argument 'prev.perm' is not 
          a 'permSemNeT' class object")
   }else{method <- prev.perm$method}

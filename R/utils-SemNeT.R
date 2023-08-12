@@ -193,7 +193,7 @@ tmfg_setup <- function(..., minCase)
 bin2resp <- function (rmat, to.data.frame = FALSE)
 {
   # Check for resp2bin class
-  if(class(rmat) == "resp2bin" || {all(apply(rmat, 2, is.numeric)) && max(rmat) > 1})
+  if(is(rmat, "resp2bin") || {all(apply(rmat, 2, is.numeric)) && max(rmat) > 1})
   {
     # Get ordered responses
     ordered <- rmat$order
@@ -382,62 +382,6 @@ binarize <- function (A)
   colnames(bin) <- colnames(A)
   
   return(bin)
-}
-
-#' Convert Network(s) to igraph's Format
-#' @description Converts single or multiple networks into \code{\link{igraph}}'s format for network analysis
-#' 
-#' @param A Adjacency matrix (network matrix) or brain connectivity array
-#' (from \code{\link[NetworkToolbox]{convertConnBrainMat}})
-#' 
-#' @param neural Is input a brain connectivity array (i.e., m x m x n)?
-#' Defaults to \code{FALSE}.
-#' Set to \code{TRUE} to convert each brain connectivity matrix
-#' 
-#' @return Returns a network matrix in \code{\link{igraph}}'s format or
-#' returns a list of brain connectivity matrices each of which have been
-#' convert to \code{\link{igraph}}'s format
-#' 
-#' @examples
-#' # Pearson's correlation only for CRAN checks
-#' A <- TMFG(neoOpen, normal = FALSE)$A
-#' 
-#' igraphNetwork <- convert2igraph(A)
-#' 
-#' \dontrun{ 
-#' neuralarray <- convertConnBrainMat()
-#' 
-#' igraphNeuralList <- convert2igraph(neuralarray, neural = TRUE)
-#' }
-#' 
-#' @author Alexander Christensen <alexpaulchristensen@gmail.com>
-#' 
-#' @noRd
-# Convert matrices to igraph format (from NetworkToolbox)
-# Updated 02.09.2020
-convert2igraph <- function (A, neural = FALSE)
-{
-  if(!neural)
-  {
-    net <- igraph::as.igraph(qgraph::qgraph(A,DoNotPlot=TRUE))
-    return(net)
-  }else if(neural)
-  {
-    netlist <- list()
-    
-    n<-length(A)/nrow(A)/ncol(A)
-    
-    pb <- txtProgressBar(max=n, style = 3)
-    
-    for(i in 1:n)
-    {
-      netlist[[i]] <- igraph::as.igraph(qgraph::qgraph(A[,,i],DoNotPlot=TRUE))
-      setTxtProgressBar(pb, i)
-    }
-    close(pb)
-    
-    return(netlist)
-  }
 }
 
 #%%%%%%%%%%%%%#
@@ -909,7 +853,7 @@ randnet <- function (nodes = NULL, edges = NULL, A = NULL)
 #' @noRd
 # Function to replicate rows
 # Updated 21.05.2020
-rep.rows <- function (mat, times)
+rep_rows <- function (mat, times)
 {
   # New matrix
   new.mat <- matrix(NA, nrow = 0, ncol = ncol(mat))
@@ -1047,8 +991,8 @@ boot.one.test <- function (bootSemNeT.obj,
                            groups = NULL)
 {
   #Check for 'bootSemNeT' object
-  if(class(bootSemNeT.obj) != "bootSemNeT")
-  {stop("Object input into 'bootSemNeT.obj' is not a 'bootSemNeT' object")}
+  if(!is(bootSemNeT.obj, "bootSemNeT")){
+    stop("Object input into 'bootSemNeT.obj' is not a 'bootSemNeT' object")}
   
   #Check for data if formula is not NULL
   if(!is.null(formula))
@@ -1131,7 +1075,7 @@ boot.one.test <- function (bootSemNeT.obj,
       aov.obj[,2:3] <- apply(aov.obj[,2:3], 2, function(x){as.numeric(as.character(x))})
       
       #Organize groups
-      aov.obj <- as.data.frame(cbind(aov.obj, rep.rows(groups, iter)), stringsAsFactors = FALSE)
+      aov.obj <- as.data.frame(cbind(aov.obj, rep_rows(groups, iter)), stringsAsFactors = FALSE)
       
       #Get column before groups
       edge.col <- which(colnames(aov.obj) == "Edges")

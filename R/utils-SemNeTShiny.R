@@ -1642,7 +1642,7 @@ boot.one.testShiny <- function (bootSemNeT.obj,
             aov.obj[,2:3] <- apply(aov.obj[,2:3], 2, function(x){as.numeric(as.character(x))})
             
             #Organize groups
-            aov.obj <- as.data.frame(cbind(aov.obj, rep.rows(groups, iter)), stringsAsFactors = FALSE)
+            aov.obj <- as.data.frame(cbind(aov.obj, rep_rows(groups, iter)), stringsAsFactors = FALSE)
             
             #Get column before groups
             edge.col <- which(colnames(aov.obj) == "Edges")

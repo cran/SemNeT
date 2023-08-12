@@ -87,7 +87,11 @@ randnet.test <- function (..., iter, cores)
     
     #Compute random networks
     for(i in 1:length(data.list))
-    {rand.list[[i]] <- pbapply::pblapply(X = data.list[[i]], FUN = function(X){randnet(A = X)}, cl = cl)}
+    {rand.list[[i]] <- pbapply::pblapply(
+      X = data.list[[i]], FUN = function(X){
+        randnet(nodes = ncol(X), edges = floor(sum(X) / 2))
+      }, cl = cl)
+    }
     
     #Stop parallel processing
     parallel::stopCluster(cl)
